@@ -37,6 +37,20 @@ export class ApiService {
         return await response.json();
     }
 
+    static async patch(endpoint: string, data: any) {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    }
+
     static async delete(endpoint: string) {
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
             method: "DELETE",
@@ -47,3 +61,5 @@ export class ApiService {
         return await response.json();
     }
 }
+
+export default ApiService;

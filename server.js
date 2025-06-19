@@ -3,9 +3,13 @@ const path = require('path');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
+const GeminiService = require('./services/gemini-service');
 
 const app = express();
 const port = 3000;
+
+// Initialize Gemini service
+const geminiService = new GeminiService();
 
 // Middleware
 app.use(cors());
@@ -201,6 +205,170 @@ app.post('/api/niches', (req, res) => {
     });
 });
 
+// Content Generation API
+app.post('/api/generate-content', async (req, res) => {
+    const { niche_id, count = 1 } = req.body;
+
+    if (!niche_id) {
+        return res.status(400).json({ error: 'Niche ID is required' });
+    }
+
+    try {
+        // Get niche details
+        const niche = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM niches WHERE id = ? AND active = 1', [niche_id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!niche) {
+            return res.status(404).json({ error: 'Niche not found' });
+        }
+
+        // Generate content using Gemini
+        const content = await geminiService.generateContent(niche);
+
+        // Store in database
+        const insertQuery = `
+            INSERT INTO content (niche_id, type, title, content, hashtags, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+
+        const contentData = JSON.stringify({
+            tweet: content.tweet,
+            instagram: content.instagram,
+            imagePrompt: content.imagePrompt
+        });
+
+        db.run(insertQuery, [
+            niche_id,
+            'complete',
+            `Generated content for ${niche.name}`,
+            contentData,
+            content.hashtags,
+            'pending'
+        ], function(err) {
+            if (err) {
+                console.error('Error storing content:', err);
+                res.status(500).json({ error: 'Failed to store generated content' });
+            } else {
+                const generatedContent = {
+                    id: this.lastID,
+                    niche_id,
+                    niche_name: niche.name,
+                    ...content,
+                    created_at: new Date().toISOString(),
+                    status: 'pending'
+                };
+
+                res.json(generatedContent);
+
+                // Broadcast to SSE clients
+                broadcast({
+                    type: 'content_generated',
+                    content: generatedContent
+                });
+            }
+        });
+
+    } catch (error) {
+        console.error('Content generation error:', error);
+        res.status(500).json({
+            error: 'Content generation failed',
+            details: error.message
+        });
+    }
+});
+
+// Get generated content
+app.get('/api/content', (req, res) => {
+    const { niche_id, status, limit = 50 } = req.query;
+
+    let query = `
+        SELECT c.*, n.name as niche_name
+        FROM content c
+        JOIN niches n ON c.niche_id = n.id
+        WHERE 1=1
+    `;
+    const params = [];
+
+    if (niche_id) {
+        query += ' AND c.niche_id = ?';
+        params.push(niche_id);
+    }
+
+    if (status) {
+        query += ' AND c.status = ?';
+        params.push(status);
+    }
+
+    query += ' ORDER BY c.created_at DESC LIMIT ?';
+    params.push(parseInt(limit));
+
+    db.all(query, params, (err, rows) => {
+        if (err) {
+            console.error('Error fetching content:', err);
+            res.status(500).json({ error: 'Failed to fetch content' });
+        } else {
+            // Parse content JSON for each row
+            const content = rows.map(row => {
+                try {
+                    const parsedContent = JSON.parse(row.content);
+                    return {
+                        ...row,
+                        ...parsedContent
+                    };
+                } catch (e) {
+                    return row;
+                }
+            });
+            res.json(content);
+        }
+    });
+});
+
+// Update content status (Post, Delete, etc.)
+app.patch('/api/content/:id', (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+        return res.status(400).json({ error: 'Status is required' });
+    }
+
+    const query = 'UPDATE content SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+    db.run(query, [status, id], function(err) {
+        if (err) {
+            console.error('Error updating content:', err);
+            res.status(500).json({ error: 'Failed to update content' });
+        } else if (this.changes === 0) {
+            res.status(404).json({ error: 'Content not found' });
+        } else {
+            res.json({ success: true, id, status });
+
+            // Broadcast update
+            broadcast({
+                type: 'content_updated',
+                content: { id, status }
+            });
+        }
+    });
+});
+
+// Test Gemini API connection
+app.get('/api/test-gemini', async (req, res) => {
+    try {
+        const result = await geminiService.testConnection();
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
 // Main route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -214,6 +382,10 @@ app.listen(port, () => {
     console.log('  GET  /api/niches - List all niches');
     console.log('  POST /api/niches - Create new niche');
     console.log('  GET  /api/events - Server-Sent Events for real-time updates');
+    console.log('  POST /api/generate-content - Generate AI content for niche');
+    console.log('  GET  /api/content - Get generated content');
+    console.log('  PATCH /api/content/:id - Update content status');
+    console.log('  GET  /api/test-gemini - Test Gemini API connection');
 });
 
 // Graceful shutdown
