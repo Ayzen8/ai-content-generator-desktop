@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Content Generator Settings</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      margin: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .service-list {
+      margin-bottom: 20px;
+    }
+    .service-item {
+      padding: 15px;
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      position: relative;
+    }
+    .service-item .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    .status-running { background-color: #28a745; }
+    .status-stopped { background-color: #dc3545; }
+    .status-error { background-color: #ffc107; }
+    .button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 8px;
+      transition: background-color 0.2s;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+    .button.danger {
+      background-color: #dc3545;
+    }
+    .button.danger:hover {
+      background-color: #bd2130;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #555;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .service-logs {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .add-service-form {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #f8f9fa;
+    }
+    .error {
+      color: #dc3545;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    .success {
+      color: #28a745;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Service Manager</h1>
+    
+    <!-- Add Service Form -->
+    <div class="add-service-form">
+      <h2>Add New Service</h2>
+      <form id="addServiceForm">
+        <div class="form-group">
+          <label for="serviceName">Service Name:</label>
+          <input type="text" id="serviceName" required placeholder="Enter service name">
+        </div>
+        <div class="form-group">
+          <label for="serviceCommand">Command:</label>
+          <input type="text" id="serviceCommand" required placeholder="Enter command to run">
+        </div>
+        <div class="form-group">
+          <label for="serviceArgs">Arguments (comma-separated):</label>
+          <input type="text" id="serviceArgs" placeholder="arg1,arg2,arg3">
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="serviceAutostart">
+            Start automatically
+          </label>
+        </div>
+        <button type="submit" class="button">Add Service</button>
+      </form>
+    </div>
+
+    <!-- Service List -->
+    <div class="service-list" id="serviceList">
+      <!-- Services will be inserted here -->
+    </div>
+  </div>
+
+  <template id="serviceTemplate">
+    <div class="service-item">
+      <div class="service-header">
+        <span class="status-dot"></span>
+        <strong class="service-name"></strong>
+        <div class="service-controls" style="float: right;">
+          <button class="button start-button">Start</button>
+          <button class="button stop-button">Stop</button>
+          <button class="button danger remove-button">Remove</button>
+        </div>
+      </div>
+      <div class="service-details" style="margin-top: 10px;">
+        <div>Command: <span class="service-command"></span></div>
+        <div>Arguments: <span class="service-args"></span></div>
+        <div>Autostart: <span class="service-autostart"></span></div>
+        <div class="service-logs"></div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    const { serviceManager } = require('./serviceManager');
+
+    function updateServiceList() {
+      const serviceList = document.getElementById('serviceList');
+      serviceList.innerHTML = '';
+      
+      const services = serviceManager.getServices();
+      services.forEach(service => {
+        const template = document.getElementById('serviceTemplate');
+        const clone = document.importNode(template.content, true);
+        
+        const statusDot = clone.querySelector('.status-dot');
+        const serviceName = clone.querySelector('.service-name');
+        const serviceCommand = clone.querySelector('.service-command');
+        const serviceArgs = clone.querySelector('.service-args');
+        const serviceAutostart = clone.querySelector('.service-autostart');
+        const serviceLogs = clone.querySelector('.service-logs');
+        const startButton = clone.querySelector('.start-button');
+        const stopButton = clone.querySelector('.stop-button');
+        const removeButton = clone.querySelector('.remove-button');
+
+        serviceName.textContent = service.name;
+        serviceCommand.textContent = service.command;
+        serviceArgs.textContent = service.args.join(', ');
+        serviceAutostart.textContent = service.autostart ? 'Yes' : 'No';
+
+        const statusClass = {
+          'running': 'status-running',
+          'stopped': 'status-stopped',
+          'error': 'status-error'
+        }[service.status];
+
+        statusDot.classList.add(statusClass);
+
+        startButton.onclick = () => startService(service.name);
+        stopButton.onclick = () => stopService(service.name);
+        removeButton.onclick = () => removeService(service.name);
+
+        serviceList.appendChild(clone);
+      });
+    }
+
+    async function startService(name) {
+      await serviceManager.startService(name);
+      updateServiceList();
+    }
+
+    async function stopService(name) {
+      await serviceManager.stopService(name);
+      updateServiceList();
+    }
+
+    function removeService(name) {
+      if (confirm(`Are you sure you want to remove ${name}?`)) {
+        serviceManager.removeService(name);
+        updateServiceList();
+      }
+    }
+
+    document.getElementById('addServiceForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const name = document.getElementById('serviceName').value;
+      const command = document.getElementById('serviceCommand').value;
+      const args = document.getElementById('serviceArgs').value.split(',').map(arg => arg.trim()).filter(Boolean);
+      const autostart = document.getElementById('serviceAutostart').checked;
+
+      serviceManager.addService({ name, command, args, autostart });
+      updateServiceList();
+      e.target.reset();
+    });
+
+    // Initial update
+    updateServiceList();
+
+    // Update every second
+    setInterval(updateServiceList, 1000);
+  </script>
+</body>
+</html>
