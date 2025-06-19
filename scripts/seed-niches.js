@@ -143,10 +143,45 @@ const niches = [
     // Instagram Theme Pages
     {
         name: "Instagram Theme Pages",
-        description: "Curated Instagram content and aesthetic themes",
+        description: "Parent category for Instagram aesthetic theme pages",
         persona: "Social media curator with excellent aesthetic sense and understanding of Instagram trends. Creates cohesive visual narratives and understands what resonates with different audiences. Balances trending content with timeless appeal.",
         keywords: "Instagram, social media, aesthetic, visual content, Instagram themes, social media marketing, content creation, visual storytelling",
         parent_id: null
+    },
+    {
+        name: "Minimalist Aesthetic",
+        description: "Clean, minimal Instagram content with simple aesthetics",
+        persona: "Minimalist lifestyle curator who appreciates clean lines, neutral colors, and simplicity. Speaks to audiences seeking calm, organized, and intentional living. Uses sophisticated language while remaining accessible.",
+        keywords: "minimalist, clean aesthetic, neutral tones, simple living, minimal design, white space, clean lines, organized life, intentional living",
+        parent_id: 17
+    },
+    {
+        name: "Dark Academia",
+        description: "Scholarly, vintage-inspired aesthetic with books and academia",
+        persona: "Intellectual content creator with deep appreciation for literature, history, and classical education. Uses eloquent language and references to classic works. Appeals to book lovers and students.",
+        keywords: "dark academia, books, vintage, scholarly, literature, classical, academia, vintage books, study aesthetic, intellectual",
+        parent_id: 17
+    },
+    {
+        name: "Cottagecore",
+        description: "Rural, cozy lifestyle content with nature and simplicity",
+        persona: "Nature-loving content creator who celebrates simple, rural living and traditional crafts. Warm, nurturing tone that promotes slow living and connection with nature. Appeals to those seeking escape from modern life.",
+        keywords: "cottagecore, rural living, nature, cozy, simple life, traditional crafts, countryside, slow living, natural beauty, handmade",
+        parent_id: 17
+    },
+    {
+        name: "Streetwear Fashion",
+        description: "Urban fashion and streetwear culture content",
+        persona: "Fashion-forward streetwear enthusiast with deep knowledge of urban culture and fashion trends. Uses current slang appropriately and understands the intersection of fashion, music, and street culture.",
+        keywords: "streetwear, urban fashion, sneakers, street style, fashion trends, urban culture, style inspiration, fashion brands, street fashion",
+        parent_id: 17
+    },
+    {
+        name: "Plant Parent",
+        description: "Plant care, indoor gardening, and plant aesthetic content",
+        persona: "Plant enthusiast with extensive knowledge of plant care and indoor gardening. Nurturing and educational tone that helps beginners while sharing advanced tips. Passionate about green living and plant wellness.",
+        keywords: "plants, indoor gardening, plant care, houseplants, plant parent, green living, plant aesthetic, gardening tips, plant wellness",
+        parent_id: 17
     },
     {
         name: "Memes & Humor",

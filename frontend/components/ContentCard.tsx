@@ -12,12 +12,17 @@ interface ContentCardProps {
     imagePrompt: string;
     status: string;
     created_at: string;
+    posted_to_twitter?: boolean;
+    posted_to_instagram?: boolean;
+    twitter_post_id?: string;
+    instagram_post_id?: string;
   };
   onContentUpdate: () => void;
 }
 
 const ContentCard: React.FC<ContentCardProps> = ({ content, onContentUpdate }) => {
   const [loading, setLoading] = useState(false);
+  const [posting, setPosting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const updateStatus = async (newStatus: string) => {
@@ -56,6 +61,29 @@ const ContentCard: React.FC<ContentCardProps> = ({ content, onContentUpdate }) =
     }
   };
 
+  const postToTwitter = async () => {
+    setPosting(true);
+    try {
+      const response = await ApiService.post('/api/twitter/post', {
+        content: content.tweet,
+        contentId: content.id
+      });
+
+      if (response.success) {
+        alert(`✅ Posted to X successfully!\nView at: ${response.url}`);
+        onContentUpdate();
+      } else {
+        alert(`❌ Failed to post to X: ${response.error}`);
+      }
+    } catch (error: any) {
+      console.error('Error posting to Twitter:', error);
+      const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+      alert(`❌ Failed to post to X: ${errorMessage}`);
+    } finally {
+      setPosting(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
@@ -87,11 +115,11 @@ const ContentCard: React.FC<ContentCardProps> = ({ content, onContentUpdate }) =
       </div>
 
       <div className="content-sections">
-        {/* Tweet Section */}
+        {/* X Post Section */}
         <div className="content-section">
           <div className="section-header">
-            <h4>🐦 Tweet ({content.tweet.length}/280)</h4>
-            <button 
+            <h4>𝕏 X Post ({content.tweet.length}/280)</h4>
+            <button
               className="copy-btn"
               onClick={() => copyToClipboard(content.tweet, 'tweet')}
               disabled={loading}
@@ -160,27 +188,46 @@ const ContentCard: React.FC<ContentCardProps> = ({ content, onContentUpdate }) =
       <div className="content-actions">
         {content.status === 'pending' && (
           <>
-            <button 
+            <button
+              className="action-btn twitter-btn"
+              onClick={postToTwitter}
+              disabled={loading || posting || content.posted_to_twitter}
+              title={content.posted_to_twitter ? 'Already posted to X' : 'Post to X (Twitter)'}
+            >
+              {posting ? '⏳ Posting...' : content.posted_to_twitter ? '✅ Posted to 𝕏' : '🐦 Post to 𝕏'}
+            </button>
+            <button
               className="action-btn post-btn"
               onClick={() => updateStatus('posted')}
-              disabled={loading}
+              disabled={loading || posting}
             >
-              ✅ Post
+              ✅ Mark Posted
             </button>
-            <button 
+            <button
               className="action-btn delete-btn"
               onClick={() => updateStatus('deleted')}
-              disabled={loading}
+              disabled={loading || posting}
             >
               🗑️ Delete
             </button>
           </>
         )}
-        
-        <button 
+
+        {content.status === 'posted' && content.twitter_post_id && (
+          <a
+            href={`https://twitter.com/i/web/status/${content.twitter_post_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="action-btn view-btn"
+          >
+            👁️ View on 𝕏
+          </a>
+        )}
+
+        <button
           className="action-btn regenerate-btn"
           onClick={regenerateContent}
-          disabled={loading}
+          disabled={loading || posting}
         >
           {loading ? '⏳ Generating...' : '🔄 Regenerate'}
         </button>

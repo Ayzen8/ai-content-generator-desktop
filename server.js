@@ -1,9 +1,14 @@
+// Load environment variables from .env file
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const GeminiService = require('./services/gemini-service');
+const twitterService = require('./services/twitter-service');
+const instagramService = require('./services/instagram-service');
 
 const app = express();
 const port = 3000;
@@ -76,6 +81,35 @@ function initializeDatabase() {
             completed_at DATETIME,
             FOREIGN KEY (niche_id) REFERENCES niches (id)
         );
+
+        CREATE TABLE IF NOT EXISTS api_keys (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            service TEXT NOT NULL UNIQUE,
+            encrypted_key TEXT,
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS twitter_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            username TEXT NOT NULL,
+            access_token TEXT NOT NULL,
+            refresh_token TEXT,
+            expires_at DATETIME,
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS instagram_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            username TEXT NOT NULL,
+            access_token TEXT NOT NULL,
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
     `;
 
     db.exec(createTables, (err) => {
@@ -83,7 +117,27 @@ function initializeDatabase() {
             console.error('Error creating tables:', err.message);
         } else {
             console.log('Database tables initialized');
+            // Add new columns to existing content table if they don't exist
+            addTwitterColumns();
         }
+    });
+}
+
+// Add Twitter columns to existing content table
+function addTwitterColumns() {
+    const alterQueries = [
+        'ALTER TABLE content ADD COLUMN posted_to_twitter BOOLEAN DEFAULT 0',
+        'ALTER TABLE content ADD COLUMN posted_to_instagram BOOLEAN DEFAULT 0',
+        'ALTER TABLE content ADD COLUMN twitter_post_id TEXT',
+        'ALTER TABLE content ADD COLUMN instagram_post_id TEXT'
+    ];
+
+    alterQueries.forEach(query => {
+        db.run(query, (err) => {
+            if (err && !err.message.includes('duplicate column name')) {
+                console.error('Error adding column:', err.message);
+            }
+        });
     });
 }
 
@@ -362,6 +416,377 @@ app.get('/api/test-gemini', async (req, res) => {
         const result = await geminiService.testConnection();
         res.json(result);
     } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Settings endpoints
+app.get('/api/settings', (req, res) => {
+    try {
+        const settings = {
+            geminiApiKey: process.env.GEMINI_API_KEY || '',
+            leonardoApiKey: process.env.LEONARDO_API_KEY || ''
+        };
+        res.json(settings);
+    } catch (error) {
+        console.error('Error loading settings:', error);
+        res.status(500).json({ error: 'Failed to load settings' });
+    }
+});
+
+app.post('/api/settings', (req, res) => {
+    try {
+        const { geminiApiKey, leonardoApiKey } = req.body;
+
+        // Update environment variables (in a real app, you'd want to persist these)
+        if (geminiApiKey) {
+            process.env.GEMINI_API_KEY = geminiApiKey;
+        }
+        if (leonardoApiKey) {
+            process.env.LEONARDO_API_KEY = leonardoApiKey;
+        }
+
+        res.json({ success: true, message: 'Settings saved successfully' });
+    } catch (error) {
+        console.error('Error saving settings:', error);
+        res.status(500).json({ error: 'Failed to save settings' });
+    }
+});
+
+app.post('/api/test-gemini', async (req, res) => {
+    try {
+        const { apiKey } = req.body;
+
+        // Temporarily use the provided API key for testing
+        const originalKey = process.env.GEMINI_API_KEY;
+        process.env.GEMINI_API_KEY = apiKey;
+
+        const result = await geminiService.testConnection();
+
+        // Restore original key
+        process.env.GEMINI_API_KEY = originalKey;
+
+        res.json(result);
+    } catch (error) {
+        console.error('Error testing Gemini connection:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to test connection'
+        });
+    }
+});
+
+// Twitter API endpoints
+
+// Get Twitter OAuth URL
+app.get('/api/twitter/auth-url', async (req, res) => {
+    try {
+        const authData = await twitterService.getAuthUrl();
+        res.json(authData);
+    } catch (error) {
+        console.error('Error getting Twitter auth URL:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Handle Twitter OAuth callback
+app.post('/api/twitter/callback', async (req, res) => {
+    try {
+        const { code, codeVerifier, callbackUrl } = req.body;
+
+        const authResult = await twitterService.handleCallback(code, codeVerifier, callbackUrl);
+
+        // Store the access token in database (encrypted)
+        const encryptedToken = twitterService.encryptToken(authResult.accessToken);
+
+        db.run(
+            'INSERT OR REPLACE INTO twitter_accounts (user_id, username, access_token, refresh_token, expires_at) VALUES (?, ?, ?, ?, ?)',
+            [
+                authResult.user.id,
+                authResult.user.username,
+                encryptedToken,
+                authResult.refreshToken,
+                new Date(Date.now() + authResult.expiresIn * 1000)
+            ],
+            function(err) {
+                if (err) {
+                    console.error('Error storing Twitter account:', err);
+                    res.status(500).json({ error: 'Failed to store account' });
+                } else {
+                    res.json({
+                        success: true,
+                        user: authResult.user
+                    });
+                }
+            }
+        );
+    } catch (error) {
+        console.error('Error handling Twitter callback:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Post tweet
+app.post('/api/twitter/post', async (req, res) => {
+    try {
+        const { content, contentId } = req.body;
+
+        if (!content) {
+            return res.status(400).json({ error: 'Content is required' });
+        }
+
+        // Validate content
+        const validation = twitterService.validateTweetContent(content);
+        if (!validation.valid) {
+            return res.status(400).json({
+                error: 'Invalid tweet content',
+                details: validation.errors
+            });
+        }
+
+        // Get active Twitter account
+        db.get(
+            'SELECT * FROM twitter_accounts WHERE is_active = 1 ORDER BY created_at DESC LIMIT 1',
+            async (err, account) => {
+                if (err) {
+                    console.error('Error fetching Twitter account:', err);
+                    return res.status(500).json({ error: 'Database error' });
+                }
+
+                if (!account) {
+                    return res.status(400).json({ error: 'No Twitter account connected' });
+                }
+
+                try {
+                    // Decrypt access token
+                    const accessToken = twitterService.decryptToken(account.access_token);
+
+                    // Post tweet
+                    const result = await twitterService.postTweet(content, accessToken);
+
+                    // Update content status if contentId provided
+                    if (contentId) {
+                        db.run(
+                            'UPDATE content SET status = ?, posted_to_twitter = 1, twitter_post_id = ? WHERE id = ?',
+                            ['posted', result.tweetId, contentId]
+                        );
+                    }
+
+                    res.json({
+                        success: true,
+                        tweetId: result.tweetId,
+                        url: `https://twitter.com/${account.username}/status/${result.tweetId}`
+                    });
+
+                    // Broadcast update
+                    broadcast({
+                        type: 'tweet_posted',
+                        content: { id: contentId, tweetId: result.tweetId }
+                    });
+
+                } catch (postError) {
+                    console.error('Error posting tweet:', postError);
+                    res.status(500).json({
+                        error: 'Failed to post tweet',
+                        details: postError.message
+                    });
+                }
+            }
+        );
+    } catch (error) {
+        console.error('Error in tweet posting:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get Twitter rate limit status
+app.get('/api/twitter/rate-limits', (req, res) => {
+    try {
+        const rateLimits = twitterService.getRateLimitStatus();
+        res.json(rateLimits);
+    } catch (error) {
+        console.error('Error getting rate limits:', error);
+        res.status(500).json({
+            error: 'Failed to get rate limits'
+        });
+    }
+});
+
+// Test Twitter connection
+app.post('/api/test-twitter', async (req, res) => {
+    try {
+        const { accessToken } = req.body;
+        const result = await twitterService.testConnection(accessToken);
+        res.json(result);
+    } catch (error) {
+        console.error('Error testing Twitter connection:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to test connection'
+        });
+    }
+});
+
+// Get connected Twitter accounts
+app.get('/api/twitter/accounts', (req, res) => {
+    db.all(
+        'SELECT user_id, username, is_active, created_at FROM twitter_accounts ORDER BY created_at DESC',
+        (err, accounts) => {
+            if (err) {
+                console.error('Error fetching Twitter accounts:', err);
+                res.status(500).json({ error: 'Failed to fetch accounts' });
+            } else {
+                res.json(accounts);
+            }
+        }
+    );
+});
+
+// Instagram API endpoints
+
+// Get Instagram OAuth URL
+app.get('/api/instagram/auth-url', async (req, res) => {
+    try {
+        const authData = await instagramService.getAuthUrl();
+        res.json(authData);
+    } catch (error) {
+        console.error('Error getting Instagram auth URL:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Handle Instagram OAuth callback
+app.post('/api/instagram/callback', async (req, res) => {
+    try {
+        const { code, callbackUrl } = req.body;
+
+        const authResult = await instagramService.handleCallback(code, callbackUrl);
+
+        // Store the access token in database (encrypted)
+        const encryptedToken = instagramService.encryptToken(authResult.accessToken);
+
+        db.run(
+            'INSERT OR REPLACE INTO instagram_accounts (user_id, username, access_token, is_active) VALUES (?, ?, ?, ?)',
+            [
+                authResult.user.id,
+                authResult.user.username,
+                encryptedToken,
+                1
+            ],
+            function(err) {
+                if (err) {
+                    console.error('Error storing Instagram account:', err);
+                    res.status(500).json({ error: 'Failed to store account' });
+                } else {
+                    res.json({
+                        success: true,
+                        user: authResult.user
+                    });
+                }
+            }
+        );
+    } catch (error) {
+        console.error('Error handling Instagram callback:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// Get Instagram rate limit status
+app.get('/api/instagram/rate-limits', (req, res) => {
+    try {
+        const rateLimits = instagramService.getRateLimitStatus();
+        res.json(rateLimits);
+    } catch (error) {
+        console.error('Error getting Instagram rate limits:', error);
+        res.status(500).json({
+            error: 'Failed to get rate limits'
+        });
+    }
+});
+
+// Test Instagram connection
+app.post('/api/test-instagram', async (req, res) => {
+    try {
+        const { accessToken } = req.body;
+        const result = await instagramService.testConnection(accessToken);
+        res.json(result);
+    } catch (error) {
+        console.error('Error testing Instagram connection:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to test connection'
+        });
+    }
+});
+
+// Get connected Instagram accounts
+app.get('/api/instagram/accounts', (req, res) => {
+    db.all(
+        'SELECT user_id, username, is_active, created_at FROM instagram_accounts ORDER BY created_at DESC',
+        (err, accounts) => {
+            if (err) {
+                console.error('Error fetching Instagram accounts:', err);
+                res.status(500).json({ error: 'Failed to fetch accounts' });
+            } else {
+                res.json(accounts);
+            }
+        }
+    );
+});
+
+// Get user's Instagram media
+app.get('/api/instagram/media', async (req, res) => {
+    try {
+        // Get active Instagram account
+        db.get(
+            'SELECT * FROM instagram_accounts WHERE is_active = 1 ORDER BY created_at DESC LIMIT 1',
+            async (err, account) => {
+                if (err) {
+                    console.error('Error fetching Instagram account:', err);
+                    return res.status(500).json({ error: 'Database error' });
+                }
+
+                if (!account) {
+                    return res.status(400).json({ error: 'No Instagram account connected' });
+                }
+
+                try {
+                    // Decrypt access token
+                    const accessToken = instagramService.decryptToken(account.access_token);
+
+                    // Get user media
+                    const result = await instagramService.getUserMedia(accessToken);
+                    res.json(result);
+
+                } catch (mediaError) {
+                    console.error('Error getting Instagram media:', mediaError);
+                    res.status(500).json({
+                        error: 'Failed to get Instagram media',
+                        details: mediaError.message
+                    });
+                }
+            }
+        );
+    } catch (error) {
+        console.error('Error in Instagram media endpoint:', error);
         res.status(500).json({
             success: false,
             error: error.message

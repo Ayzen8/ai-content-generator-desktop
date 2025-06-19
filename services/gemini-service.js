@@ -8,7 +8,24 @@ class GeminiService {
             console.warn('   Please set your Gemini API key to enable content generation');
         }
         this.genAI = this.apiKey ? new GoogleGenerativeAI(this.apiKey) : null;
-        this.model = this.genAI ? this.genAI.getGenerativeModel({ model: 'gemini-pro' }) : null;
+
+        // Try different model names in order of preference
+        this.modelNames = [
+            'gemini-2.5-flash',
+            'gemini-1.5-flash',
+            'gemini-1.5-pro',
+            'gemini-pro',
+            'gemini-1.0-pro'
+        ];
+
+        this.model = null;
+        this.currentModelName = null;
+
+        if (this.genAI) {
+            // We'll initialize the model on first use to handle errors gracefully
+            this.currentModelName = this.modelNames[0];
+            this.model = this.genAI.getGenerativeModel({ model: this.currentModelName });
+        }
         
         // Rate limiting
         this.lastRequestTime = 0;
@@ -63,24 +80,27 @@ Generate engaging social media content that:
 
 Create a complete content package with:
 
-**TWEET** (max 280 characters):
-[Write an engaging tweet that captures attention and encourages interaction]
+**X POST** (max 280 characters):
+[Write an engaging X (formerly Twitter) post that captures attention and encourages interaction. Focus on X platform culture and engagement patterns.]
 
 **INSTAGRAM CAPTION** (engaging, with line breaks for readability):
-[Write a longer-form caption that tells a story or provides value, optimized for Instagram]
+[Write a longer-form caption that tells a story or provides value, optimized for Instagram platform and audience.]
 
 **HASHTAGS** (mix of popular and niche-specific, 10-15 hashtags):
-[Provide hashtags that balance reach with relevance]
+[Provide hashtags that balance reach with relevance for both platforms]
 
-**IMAGE PROMPT** (for DALL-E image generation):
-[Describe a visually appealing image that would complement this content]
+**IMAGE PROMPT** (for AI image generation):
+[Create a detailed prompt for generating an eye-catching image that complements the content]
 
 Make sure each piece of content:
 - Reflects the persona's expertise and tone
 - Uses keywords naturally (not forced)
-- Is platform-appropriate
+- Is platform-appropriate (X for quick engagement and viral potential, Instagram for visual storytelling)
 - Encourages engagement
 - Provides genuine value to followers
+- X posts should focus on X platform culture, not Instagram references
+
+Remember: The persona is ${niche.persona}
 
 Focus on creating content about current trends, tips, insights, or interesting facts related to ${niche.name}.
 `;
