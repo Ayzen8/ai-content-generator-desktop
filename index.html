@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Content Generator - Service Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
+        h1 { color: #333; }
+        .service-form { margin-bottom: 20px; padding: 20px; background: #f8f9fa; border-radius: 4px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #555; }
+        input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        button.remove { background: #dc3545; }
+        button.remove:hover { background: #c82333; }
+        button.start { background: #28a745; }
+        button.start:hover { background: #218838; }
+        button.stop { background: #ffc107; color: #000; }
+        button.stop:hover { background: #e0a800; }
+        .services-list { margin-top: 20px; }
+        .service-item { padding: 15px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; background: #fff; }
+        .service-buttons { margin-top: 10px; display: flex; gap: 10px; }
+        .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.9em; margin-left: 10px; }
+        .status.running { background: #d4edda; color: #155724; }
+        .status.stopped { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Content Generator - Service Manager</h1>
+        <div class="service-form">
+            <div class="form-group">
+                <label for="serviceName">Service Name:</label>
+                <input type="text" id="serviceName" placeholder="Enter service name">
+            </div>
+            <div class="form-group">
+                <label for="servicePath">Service Path:</label>
+                <input type="text" id="servicePath" placeholder="Enter path to service executable">
+            </div>
+            <div class="form-group">
+                <label for="serviceArgs">Service Arguments (optional):</label>
+                <input type="text" id="serviceArgs" placeholder="Enter command line arguments">
+            </div>
+            <button onclick="addService()">Add Service</button>
+        </div>
+        <div class="services-list" id="servicesList"></div>
+    </div>
+    <script>
+        let services = JSON.parse(localStorage.getItem('services') || '[]');
+        function saveServices() { localStorage.setItem('services', JSON.stringify(services)); }
+        function addService() {
+            const name = document.getElementById('serviceName').value.trim();
+            const path = document.getElementById('servicePath').value.trim();
+            const args = document.getElementById('serviceArgs').value.trim();
+            if (!name || !path) { alert('Please enter both service name and path'); return; }
+            services.push({ name, path, args, status: 'stopped', id: Date.now() });
+            saveServices(); updateServicesList(); clearForm();
+        }
+        function removeService(index) {
+            if (services[index].status === 'running') {
+                if (!confirm('This service is currently marked as running. Stop and remove it?')) return;
+            }
+            services.splice(index, 1); saveServices(); updateServicesList();
+        }
+        function toggleService(index) {
+            const service = services[index];
+            service.status = service.status === 'running' ? 'stopped' : 'running';
+            saveServices(); updateServicesList();
+        }
+        function clearForm() {
+            document.getElementById('serviceName').value = '';
+            document.getElementById('servicePath').value = '';
+            document.getElementById('serviceArgs').value = '';
+        }
+        function updateServicesList() {
+            const list = document.getElementById('servicesList');
+            list.innerHTML = '';
+            if (services.length === 0) {
+                list.innerHTML = '<p>No services added yet. Use the form above to add a service.</p>';
+                return;
+            }
+            services.forEach((service, index) => {
+                const item = document.createElement('div');
+                item.className = 'service-item';
+                const status = document.createElement('span');
+                status.className = `status ${service.status}`;
+                status.textContent = service.status;
+                item.innerHTML = `
+                    <strong>${service.name}</strong> ${status.outerHTML}
+                    <br>
+                    Path: ${service.path}
+                    ${service.args ? `<br>Args: ${service.args}` : ''}
+                    <div class="service-buttons">
+                        <button class="${service.status === 'running' ? 'stop' : 'start'}" 
+                                onclick="toggleService(${index})">
+                            ${service.status === 'running' ? 'Stop' : 'Start'}
+                        </button>
+                        <button class="remove" onclick="removeService(${index})">Remove</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function() { updateServicesList(); });
+        updateServicesList();
+    </script>
+</body>
+</html>
