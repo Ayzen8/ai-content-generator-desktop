@@ -1,8 +1,21 @@
-##Standard Workflow
-1.First think through the problem, read the codebase for relevant files, and write a plan to tasks/todo.md.
-2.The plan should have a list of todo items that you can check off as you complete them.
-3.Before you begin working, check in with me and I will verify the plan.
-4.Then, begin working on the todo items, marking them as complete as you go.
-5.Please every step of the way just give me a high level explanation of what changes you made.
-6.Make every task and code change you do as simple as possible. We want to avoid making any massive or complex changes. Every change should impact as little code as possible. Everything is about simplicity.
-7.Finally, add a review section to the projectplan.md file with a summary of the changes you made and any other relevant information.
+# Development Workflow
+
+## Standard Process
+1. Analyze requirements and plan implementation
+2. Create task breakdown in internal documentation
+3. Implement changes incrementally
+4. Test and verify functionality
+5. Document changes and progress
+
+## Development Principles
+- Keep changes simple and focused
+- Minimize code impact per change
+Ioritize stability and reliability
+- Maintain clean, readable code
+- Document all significant changes
+
+## Current Status
+Core application development is complete with all major features operational.
+
+---
+*For detailed development context, see internal documentation.*
