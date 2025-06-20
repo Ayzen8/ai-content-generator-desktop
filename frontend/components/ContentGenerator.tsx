@@ -8,6 +8,7 @@ interface Niche {
   description: string;
   persona: string;
   keywords: string;
+  parent_id: number | null;
 }
 
 interface Content {
@@ -147,17 +148,21 @@ const ContentGenerator: React.FC = () => {
       <div className="generation-controls">
         <div className="control-group">
           <label htmlFor="nicheSelect">Select Niche:</label>
-          <select 
+          <select
             id="nicheSelect"
+            className="niche-dropdown"
             value={selectedNiche || ''}
             onChange={(e) => setSelectedNiche(Number(e.target.value) || null)}
           >
             <option value="">Choose a niche...</option>
-            {niches.map(niche => (
-              <option key={niche.id} value={niche.id}>
-                {niche.name}
-              </option>
-            ))}
+            {niches
+              .sort((a, b) => a.name.localeCompare(b.name)) // Sort all niches alphabetically
+              .map(niche => (
+                <option key={niche.id} value={niche.id}>
+                  {niche.name}
+                </option>
+              ))
+            }
           </select>
         </div>
 

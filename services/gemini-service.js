@@ -111,7 +111,7 @@ Focus on creating content about current trends, tips, insights, or interesting f
     parseGeneratedContent(text, contentType) {
         try {
             // Extract sections using regex patterns
-            const tweetMatch = text.match(/\*\*TWEET\*\*[:\s]*\n(.*?)(?=\n\*\*|$)/s);
+            const tweetMatch = text.match(/\*\*(?:X POST|TWEET)\*\*[:\s]*\n(.*?)(?=\n\*\*|$)/s);
             const instagramMatch = text.match(/\*\*INSTAGRAM CAPTION\*\*[:\s]*\n(.*?)(?=\n\*\*|$)/s);
             const hashtagsMatch = text.match(/\*\*HASHTAGS\*\*[:\s]*\n(.*?)(?=\n\*\*|$)/s);
             const imagePromptMatch = text.match(/\*\*IMAGE PROMPT\*\*[:\s]*\n(.*?)(?=\n\*\*|$)/s);

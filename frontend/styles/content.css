@@ -113,6 +113,61 @@
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
+/* Enhanced Niche Dropdown Styling */
+.niche-dropdown {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.75rem;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.niche-dropdown:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Main niche options styling */
+.niche-dropdown option {
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Main niche styling */
+.niche-dropdown option.main-niche {
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  padding: 8px 12px;
+}
+
+/* Sub-niche styling */
+.niche-dropdown option.sub-niche {
+  color: #e91e63 !important;
+  font-style: italic;
+  font-weight: 500;
+  background: linear-gradient(90deg, #ffeef7 0%, #ffffff 100%) !important;
+  padding-left: 24px !important;
+  border-left: 3px solid #e91e63;
+  margin-left: 8px;
+}
+
+/* Enhanced hover effects */
+.niche-dropdown option:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.niche-dropdown option.sub-niche:hover {
+  background: linear-gradient(90deg, #f8bbd9 0%, #ffeef7 100%) !important;
+  color: #c2185b !important;
+}
+
 .generate-btn {
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   color: white;

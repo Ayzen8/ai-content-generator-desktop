@@ -79,7 +79,7 @@ const Settings: React.FC = () => {
   };
 
   const testGeminiConnection = async () => {
-    if (!settings.geminiApiKey.trim()) {
+    if (!settings.geminiApiKey || !settings.geminiApiKey.trim()) {
       setMessage({ type: 'error', text: 'Please enter a Gemini API key first.' });
       return;
     }
@@ -275,7 +275,7 @@ const Settings: React.FC = () => {
               <button
                 type="button"
                 onClick={testGeminiConnection}
-                disabled={testingApi || !settings.geminiApiKey.trim()}
+                disabled={testingApi || !settings.geminiApiKey || !settings.geminiApiKey.trim()}
                 className="test-btn"
               >
                 {testingApi ? '🔄 Testing...' : '🧪 Test'}
@@ -436,7 +436,7 @@ const Settings: React.FC = () => {
               <button
                 type="button"
                 onClick={testTwitterConnection}
-                disabled={testingTwitter || !settings.twitterBearerToken.trim()}
+                disabled={testingTwitter || !settings.twitterBearerToken || !settings.twitterBearerToken.trim()}
                 className="test-btn"
               >
                 {testingTwitter ? '🔄 Testing...' : '🧪 Test'}
