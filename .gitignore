@@ -107,3 +107,10 @@ temp/
 # Application specific
 services.json
 electron-store/
+
+# Private project planning and documentation
+projectplan.md
+tasks/todo.md
+claude.md
+STATUS_UPDATE.md
+# Keep any sensitive business planning private
