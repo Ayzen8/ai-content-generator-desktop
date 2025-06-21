@@ -521,7 +521,7 @@ const Settings: React.FC = () => {
             </div>
             <div className="info-item">
               <span className="info-label">Platform:</span>
-              <span className="info-value">X (Twitter) & Instagram</span>
+              <span className="info-value">X & Instagram</span>
             </div>
           </div>
         </div>

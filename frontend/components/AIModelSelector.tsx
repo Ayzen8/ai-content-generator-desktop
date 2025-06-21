@@ -267,14 +267,6 @@ const AIModelSelector: React.FC = () => {
             <p>Google's latest and fastest model with excellent quality and speed. Perfect for real-time content generation.</p>
           </div>
           <div className="info-card">
-            <h5>🧠 Gemini 1.5 Pro</h5>
-            <p>Advanced reasoning capabilities with longer context windows. Ideal for complex content requiring deep analysis.</p>
-          </div>
-          <div className="info-card">
-            <h5>✍️ Claude 3 Sonnet</h5>
-            <p>Anthropic's balanced model with exceptional writing capabilities. Great for creative and nuanced content.</p>
-          </div>
-          <div className="info-card">
             <h5>⚡ GPT-4 Turbo</h5>
             <p>OpenAI's latest model with improved speed and capabilities. Versatile for various content types.</p>
           </div>

@@ -12,6 +12,7 @@ const ContentQualityService = require('./services/content-quality-service');
 const growthBotService = require('./services/growth-bot-service');
 const credentialStorage = require('./services/credential-storage');
 const advancedAnalyticsService = require('./services/advanced-analytics-service');
+const contentTemplateService = require('./services/content-template-service');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -2444,6 +2445,132 @@ app.post('/api/analytics/growth-bot', async (req, res) => {
     } catch (error) {
         console.error('Error recording growth bot analytics:', error);
         res.status(500).json({ error: 'Failed to record growth bot analytics' });
+    }
+});
+
+// Content Templates API Endpoints
+app.get('/api/content-templates', async (req, res) => {
+    try {
+        const category = req.query.category;
+        const templates = await contentTemplateService.getTemplatesByCategory(category);
+        res.json(templates);
+    } catch (error) {
+        console.error('Error getting content templates:', error);
+        res.status(500).json({ error: 'Failed to get content templates' });
+    }
+});
+
+app.get('/api/content-templates/categories', async (req, res) => {
+    try {
+        const categories = await contentTemplateService.getTemplateCategories();
+        res.json(categories);
+    } catch (error) {
+        console.error('Error getting template categories:', error);
+        res.status(500).json({ error: 'Failed to get template categories' });
+    }
+});
+
+app.get('/api/content-templates/prompts', async (req, res) => {
+    try {
+        const nicheId = req.query.nicheId;
+        const prompts = await contentTemplateService.getSavedPrompts(nicheId);
+        res.json(prompts);
+    } catch (error) {
+        console.error('Error getting saved prompts:', error);
+        res.status(500).json({ error: 'Failed to get saved prompts' });
+    }
+});
+
+app.get('/api/content-templates/:id', async (req, res) => {
+    try {
+        const template = await contentTemplateService.getTemplateById(req.params.id);
+        if (template) {
+            res.json(template);
+        } else {
+            res.status(404).json({ error: 'Template not found' });
+        }
+    } catch (error) {
+        console.error('Error getting template:', error);
+        res.status(500).json({ error: 'Failed to get template' });
+    }
+});
+
+app.post('/api/content-templates/apply', async (req, res) => {
+    try {
+        const { templateId, variables } = req.body;
+
+        if (!templateId) {
+            return res.status(400).json({ error: 'Template ID is required' });
+        }
+
+        const template = await contentTemplateService.getTemplateById(templateId);
+        if (!template) {
+            return res.status(404).json({ error: 'Template not found' });
+        }
+
+        const appliedTemplate = contentTemplateService.applyTemplate(template, variables || {});
+
+        // Increment usage count
+        await contentTemplateService.incrementTemplateUsage(templateId);
+
+        res.json(appliedTemplate);
+    } catch (error) {
+        console.error('Error applying template:', error);
+        res.status(500).json({ error: 'Failed to apply template' });
+    }
+});
+
+app.post('/api/content-templates/prompts', async (req, res) => {
+    try {
+        const prompt = req.body;
+
+        if (!prompt.name || !prompt.prompt_text) {
+            return res.status(400).json({ error: 'Name and prompt text are required' });
+        }
+
+        const promptId = await contentTemplateService.savePrompt(prompt);
+        res.json({ success: true, id: promptId });
+    } catch (error) {
+        console.error('Error saving prompt:', error);
+        res.status(500).json({ error: 'Failed to save prompt' });
+    }
+});
+
+app.post('/api/content/generate-from-template', async (req, res) => {
+    try {
+        const { templateContent, templateId } = req.body;
+
+        if (!templateContent) {
+            return res.status(400).json({ error: 'Template content is required' });
+        }
+
+        // Convert template content to a format suitable for content generation
+        let combinedContent = '';
+
+        if (typeof templateContent === 'object') {
+            // Combine all template sections into a single content string
+            combinedContent = Object.values(templateContent)
+                .filter(value => typeof value === 'string')
+                .join('\n\n');
+        } else {
+            combinedContent = String(templateContent);
+        }
+
+        // Use the AI service to enhance and format the template content
+        const enhancedContent = await aiModelManager.generateContent(
+            { name: 'General', persona: 'Professional content creator' },
+            'template-enhancement',
+            combinedContent
+        );
+
+        res.json({
+            success: true,
+            content: enhancedContent,
+            template_id: templateId
+        });
+    } catch (error) {
+        console.error('Error generating content from template:', error);
+        res.status(500).json({ error: 'Failed to generate content from template' });
     }
 });
 
