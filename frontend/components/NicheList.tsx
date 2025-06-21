@@ -21,12 +21,13 @@ const NicheList: React.FC = () => {
 
   const loadNiches = async () => {
     try {
-      const data = await ApiService.get('/niches');
-      setNiches(data);
+      const data = await ApiService.get('/api/niches');
+      setNiches(Array.isArray(data) ? data : []);
       setError(null);
     } catch (err) {
       setError('Failed to load niches');
       console.error(err);
+      setNiches([]);
     } finally {
       setLoading(false);
     }
@@ -39,12 +40,12 @@ const NicheList: React.FC = () => {
     <div className="niche-list">
       <h2>Niches</h2>
       <div className="niche-grid">
-        {niches.map(niche => (
+        {Array.isArray(niches) && niches.map(niche => (
           <div key={niche.id} className="niche-card">
             <h3>{niche.name}</h3>
             <p>{niche.description}</p>
             <div className="niche-tags">
-              {niche.keywords.split(',').map(keyword => (
+              {niche.keywords && niche.keywords.split(',').map(keyword => (
                 <span key={keyword.trim()} className="tag">
                   {keyword.trim()}
                 </span>
@@ -55,6 +56,11 @@ const NicheList: React.FC = () => {
             </div>
           </div>
         ))}
+        {(!niches || niches.length === 0) && (
+          <div className="no-niches">
+            <p>No niches available. Create your first niche to get started!</p>
+          </div>
+        )}
       </div>
     </div>
   );

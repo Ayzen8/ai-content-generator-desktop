@@ -78,6 +78,7 @@ const ContentHistory: React.FC = () => {
   };
 
   const getFilteredContent = () => {
+    if (!Array.isArray(content)) return [];
     let filtered = [...content];
 
     // Search filter
@@ -145,10 +146,13 @@ const ContentHistory: React.FC = () => {
 
   const getContentStats = () => {
     const filtered = getFilteredContent();
+    if (!Array.isArray(filtered)) {
+      return { pending: 0, posted: 0, deleted: 0, total: 0 };
+    }
     const pending = filtered.filter(c => c.status === 'pending').length;
     const posted = filtered.filter(c => c.status === 'posted').length;
     const deleted = filtered.filter(c => c.status === 'deleted').length;
-    
+
     return { pending, posted, deleted, total: filtered.length };
   };
 
