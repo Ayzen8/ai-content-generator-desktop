@@ -1,4 +1,5 @@
 /* Component Styles */
+@import url('./enhanced-ui.css');
 @import url('./content.css');
 @import url('./dashboard.css');
 @import url('./analytics.css');
