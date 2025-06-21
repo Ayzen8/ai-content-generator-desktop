@@ -9,6 +9,7 @@ const fs = require('fs');
 const GeminiService = require('./services/gemini-service');
 const AIModelManager = require('./services/ai-model-manager');
 const ContentQualityService = require('./services/content-quality-service');
+const growthBotService = require('./services/growth-bot-service');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -159,6 +160,68 @@ function initializeDatabase() {
             console.log('Database tables initialized');
             // Add new columns to existing content table if they don't exist
             addTwitterColumns();
+            // Insert initial niches if none exist
+            insertInitialNiches();
+        }
+    });
+}
+
+// Insert initial niches if none exist
+function insertInitialNiches() {
+    db.get('SELECT COUNT(*) as count FROM niches', (err, row) => {
+        if (err) {
+            console.error('Error checking niches count:', err);
+            return;
+        }
+
+        if (row.count === 0) {
+            console.log('Inserting initial niches...');
+            const initialNiches = [
+                {
+                    name: "Technology & Innovation",
+                    description: "Latest tech trends, gadgets, AI, and digital innovation",
+                    persona: "Tech enthusiast who loves exploring cutting-edge technology and sharing insights about digital transformation",
+                    keywords: "technology, innovation, AI, gadgets, digital, tech trends, software, hardware"
+                },
+                {
+                    name: "Fitness & Health",
+                    description: "Workout routines, nutrition tips, wellness, and healthy lifestyle",
+                    persona: "Fitness coach passionate about helping people achieve their health goals through sustainable lifestyle changes",
+                    keywords: "fitness, health, workout, nutrition, wellness, exercise, diet, healthy lifestyle"
+                },
+                {
+                    name: "Business & Entrepreneurship",
+                    description: "Startup advice, business strategies, entrepreneurship, and professional growth",
+                    persona: "Experienced entrepreneur who mentors others and shares practical business insights and strategies",
+                    keywords: "business, entrepreneurship, startup, strategy, leadership, growth, success, professional"
+                },
+                {
+                    name: "Travel & Adventure",
+                    description: "Travel destinations, adventure stories, cultural experiences, and travel tips",
+                    persona: "World traveler who captures unique experiences and inspires others to explore new destinations",
+                    keywords: "travel, adventure, destinations, culture, exploration, wanderlust, journey, experiences"
+                },
+                {
+                    name: "Food & Cooking",
+                    description: "Recipes, cooking techniques, food culture, and culinary experiences",
+                    persona: "Passionate chef who loves experimenting with flavors and sharing delicious recipes with food lovers",
+                    keywords: "food, cooking, recipes, culinary, chef, cuisine, flavors, delicious, kitchen"
+                }
+            ];
+
+            const insertQuery = 'INSERT INTO niches (name, description, persona, keywords) VALUES (?, ?, ?, ?)';
+
+            initialNiches.forEach(niche => {
+                db.run(insertQuery, [niche.name, niche.description, niche.persona, niche.keywords], (err) => {
+                    if (err) {
+                        console.error(`Error inserting niche ${niche.name}:`, err);
+                    } else {
+                        console.log(`✓ Inserted niche: ${niche.name}`);
+                    }
+                });
+            });
+        } else {
+            console.log(`Database already has ${row.count} niches`);
         }
     });
 }
@@ -1165,6 +1228,129 @@ app.get('/api/test-gemini', async (req, res) => {
     }
 });
 
+// AI Models Management
+app.get('/api/models', (req, res) => {
+    try {
+        const models = aiModelManager.getAllModels();
+        res.json(models);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/models/available', (req, res) => {
+    try {
+        const models = aiModelManager.getAvailableModels();
+        res.json(models);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/models/current', (req, res) => {
+    try {
+        const model = aiModelManager.getCurrentModel();
+        res.json(model);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/models/switch', (req, res) => {
+    try {
+        const { modelId } = req.body;
+        const success = aiModelManager.setCurrentModel(modelId);
+
+        if (success) {
+            res.json({
+                success: true,
+                currentModel: aiModelManager.getCurrentModel()
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: 'Invalid or unavailable model'
+            });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/models/test/:modelId', async (req, res) => {
+    try {
+        const { modelId } = req.params;
+        const result = await aiModelManager.testModel(modelId);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/models/stats', (req, res) => {
+    try {
+        const stats = aiModelManager.getModelStats();
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Growth Bot Management
+app.post('/api/growth-bot/initialize', async (req, res) => {
+    try {
+        const { accessToken, accessSecret, apiKey, apiSecret } = req.body;
+
+        if (!accessToken || !accessSecret || !apiKey || !apiSecret) {
+            return res.status(400).json({
+                error: 'All Twitter credentials are required'
+            });
+        }
+
+        const success = await growthBotService.initialize(accessToken, accessSecret, apiKey, apiSecret);
+        res.json({ success, message: 'Growth Bot initialized successfully' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/growth-bot/start', async (req, res) => {
+    try {
+        const { targetNiches } = req.body;
+        const result = await growthBotService.start(targetNiches || []);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/growth-bot/stop', (req, res) => {
+    try {
+        const result = growthBotService.stop();
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/growth-bot/stats', (req, res) => {
+    try {
+        const stats = growthBotService.getStats();
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/growth-bot/config', (req, res) => {
+    try {
+        const config = growthBotService.updateConfig(req.body);
+        res.json({ success: true, config });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Settings endpoints
 app.get('/api/settings', (req, res) => {
     try {
@@ -1572,3 +1758,10 @@ if (process.env.NODE_ENV !== 'production') {
         });
     });
 }
+
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 AI Content Generator Server running on port ${PORT}`);
+    console.log(`📱 Desktop app ready at: http://localhost:${PORT}`);
+});
