@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "ai-content-generator",
+  "name": "ezbot",
   "builds": [
     {
       "src": "server.js",
@@ -30,10 +30,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "server.js": {
-      "maxDuration": 30
-    }
   }
 }
