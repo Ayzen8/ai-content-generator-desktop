@@ -69,9 +69,22 @@ function initializeDatabase() {
             hashtags TEXT,
             status TEXT DEFAULT 'draft', -- 'draft', 'published', 'scheduled'
             scheduled_at DATETIME,
+            scheduled_time DATETIME,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (niche_id) REFERENCES niches (id)
+        );
+
+        CREATE TABLE IF NOT EXISTS social_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            platform TEXT NOT NULL, -- 'twitter', 'instagram'
+            username TEXT NOT NULL,
+            user_id TEXT,
+            access_token TEXT,
+            refresh_token TEXT,
+            is_active BOOLEAN DEFAULT 1,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
 
         CREATE TABLE IF NOT EXISTS generation_jobs (
@@ -1898,6 +1911,107 @@ if (process.env.NODE_ENV !== 'production') {
         console.log('  GET  /api/content - Get generated content');
         console.log('  PATCH /api/content/:id - Update content status');
         console.log('  GET  /api/test-gemini - Test Gemini API connection');
+    });
+
+    // Missing API endpoints for Social Media Integration
+
+    // Get social media posting stats
+    app.get('/api/social/stats', (req, res) => {
+        const query = `
+            SELECT
+                COUNT(*) as totalPosts,
+                SUM(CASE WHEN status = 'posted' THEN 1 ELSE 0 END) as successfulPosts,
+                SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failedPosts,
+                MAX(created_at) as lastPostTime
+            FROM content
+            WHERE type IN ('twitter_post', 'instagram_post')
+        `;
+
+        db.get(query, (err, row) => {
+            if (err) {
+                console.error('Error fetching social stats:', err);
+                res.status(500).json({ error: 'Failed to fetch social media stats' });
+            } else {
+                res.json({
+                    totalPosts: row.totalPosts || 0,
+                    successfulPosts: row.successfulPosts || 0,
+                    failedPosts: row.failedPosts || 0,
+                    lastPostTime: row.lastPostTime || null
+                });
+            }
+        });
+    });
+
+    // Schedule content for posting
+    app.post('/api/social/schedule', (req, res) => {
+        const { contentId, platforms, scheduledTime } = req.body;
+
+        if (!contentId || !platforms || !scheduledTime) {
+            return res.status(400).json({ error: 'Content ID, platforms, and scheduled time are required' });
+        }
+
+        // For now, just update the content status to scheduled
+        const query = 'UPDATE content SET status = ?, scheduled_time = ? WHERE id = ?';
+
+        db.run(query, ['scheduled', scheduledTime, contentId], function(err) {
+            if (err) {
+                console.error('Error scheduling content:', err);
+                res.status(500).json({ error: 'Failed to schedule content' });
+            } else {
+                res.json({
+                    success: true,
+                    message: 'Content scheduled successfully',
+                    contentId,
+                    platforms,
+                    scheduledTime
+                });
+            }
+        });
+    });
+
+    // Twitter auth endpoint (simplified)
+    app.post('/api/twitter/auth', async (req, res) => {
+        try {
+            const authUrl = await twitterService.getAuthUrl();
+            res.json(authUrl);
+        } catch (error) {
+            console.error('Error getting Twitter auth URL:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Instagram auth endpoint (simplified)
+    app.post('/api/instagram/auth', async (req, res) => {
+        try {
+            const authUrl = instagramService.getAuthUrl();
+            res.json(authUrl);
+        } catch (error) {
+            console.error('Error getting Instagram auth URL:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Delete social media account
+    app.delete('/api/:platform/accounts/:accountId', (req, res) => {
+        const { platform, accountId } = req.params;
+
+        if (!['twitter', 'instagram'].includes(platform)) {
+            return res.status(400).json({ error: 'Invalid platform' });
+        }
+
+        const query = 'DELETE FROM social_accounts WHERE id = ? AND platform = ?';
+
+        db.run(query, [accountId, platform], function(err) {
+            if (err) {
+                console.error('Error deleting account:', err);
+                res.status(500).json({ error: 'Failed to delete account' });
+            } else {
+                res.json({
+                    success: true,
+                    message: `${platform} account disconnected successfully`
+                });
+            }
+        });
     });
 
     // Graceful shutdown
