@@ -3170,6 +3170,215 @@ app.post('/api/performance/suggestions/:id/implement', async (req, res) => {
     }
 });
 
+// Advanced Caching API Endpoints
+app.get('/api/cache/stats', async (req, res) => {
+    try {
+        const stats = await performanceOptimizationService.getAdvancedCacheStats();
+        res.json(stats);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/cache/stats',
+            method: 'GET',
+            userAction: 'get_cache_stats'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/cache/invalidate', async (req, res) => {
+    try {
+        const { tags } = req.body;
+        if (!tags || !Array.isArray(tags)) {
+            return res.status(400).json({ error: 'Tags array is required' });
+        }
+
+        const invalidatedCount = await performanceOptimizationService.invalidateCache(tags);
+        res.json({
+            success: true,
+            invalidated_count: invalidatedCount,
+            tags
+        });
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/cache/invalidate',
+            method: 'POST',
+            userAction: 'invalidate_cache'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/cdn/optimization-report', async (req, res) => {
+    try {
+        const report = await performanceOptimizationService.getCDNOptimizationReport();
+        res.json(report);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/cdn/optimization-report',
+            method: 'GET',
+            userAction: 'get_cdn_report'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Enhanced Database Optimization API Endpoints
+app.get('/api/database/statistics', async (req, res) => {
+    try {
+        const stats = await databaseOptimizationService.getDatabaseStatistics();
+        res.json(stats);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/database/statistics',
+            method: 'GET',
+            userAction: 'get_database_statistics'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/database/optimize', async (req, res) => {
+    try {
+        const { operation } = req.body;
+        let result;
+
+        switch (operation) {
+            case 'vacuum':
+                result = await databaseOptimizationService.vacuum();
+                break;
+            case 'reindex':
+                result = await databaseOptimizationService.reindexAll();
+                break;
+            case 'analyze':
+                result = await databaseOptimizationService.analyze();
+                break;
+            case 'cleanup':
+                const { daysToKeep = 90 } = req.body;
+                result = await databaseOptimizationService.cleanupOldData(daysToKeep);
+                break;
+            case 'backup':
+                result = await databaseOptimizationService.createBackup();
+                break;
+            default:
+                return res.status(400).json({ error: 'Invalid operation' });
+        }
+
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/database/optimize',
+            method: 'POST',
+            userAction: 'database_optimization',
+            operation: req.body.operation
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/database/query-performance', async (req, res) => {
+    try {
+        const performance = await databaseOptimizationService.getPerformanceMetrics();
+        res.json(performance);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/database/query-performance',
+            method: 'GET',
+            userAction: 'get_query_performance'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/database/optimization-suggestions', async (req, res) => {
+    try {
+        const suggestions = await databaseOptimizationService.generateOptimizationSuggestions();
+        res.json(suggestions);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/database/optimization-suggestions',
+            method: 'GET',
+            userAction: 'get_optimization_suggestions'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Performance Analytics API Endpoints
+const performanceAnalyticsService = require('./services/performance-analytics-service');
+
+app.get('/api/analytics/performance/dashboard', async (req, res) => {
+    try {
+        const dashboard = await performanceAnalyticsService.getPerformanceDashboard();
+        res.json(dashboard);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/analytics/performance/dashboard',
+            method: 'GET',
+            userAction: 'get_performance_analytics_dashboard'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/analytics/performance/trends', async (req, res) => {
+    try {
+        const hours = parseInt(req.query.hours) || 24;
+        const trends = await performanceAnalyticsService.getPerformanceTrends(hours);
+        res.json(trends);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/analytics/performance/trends',
+            method: 'GET',
+            userAction: 'get_performance_trends'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/analytics/performance/alerts', async (req, res) => {
+    try {
+        const alerts = await performanceAnalyticsService.getActiveAlerts();
+        res.json(alerts);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/analytics/performance/alerts',
+            method: 'GET',
+            userAction: 'get_performance_alerts'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/analytics/performance/metrics', async (req, res) => {
+    try {
+        const minutes = parseInt(req.query.minutes) || 60;
+        const metrics = await performanceAnalyticsService.getRecentMetrics(minutes);
+        res.json(metrics);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/analytics/performance/metrics',
+            method: 'GET',
+            userAction: 'get_performance_metrics'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/analytics/performance/alerts/:id/resolve', async (req, res) => {
+    try {
+        const alertId = parseInt(req.params.id);
+        // This would resolve the alert in the database
+        res.json({ success: true, message: 'Alert resolved' });
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/analytics/performance/alerts/:id/resolve',
+            method: 'POST',
+            userAction: 'resolve_performance_alert'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Start server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

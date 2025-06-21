@@ -1,15 +1,27 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs').promises;
+const crypto = require('crypto');
 
 class DatabaseOptimizationService {
     constructor() {
         this.dbPath = path.join(__dirname, '..', 'data', 'content.db');
         this.db = new sqlite3.Database(this.dbPath);
         this.backupPath = path.join(__dirname, '..', 'data', 'backups');
+
+        // Advanced features
+        this.connectionPool = [];
+        this.maxConnections = 10;
+        this.queryCache = new Map();
+        this.queryStats = new Map();
+        this.slowQueryThreshold = 100; // ms
+        this.preparedStatements = new Map();
+
         this.initializeOptimizationTables();
         this.ensureBackupDirectory();
-        
+        this.initializeConnectionPool();
+        this.startQueryMonitoring();
+
         // Performance thresholds
         this.performanceThresholds = {
             queryTime: 100, // ms
@@ -78,6 +90,109 @@ class DatabaseOptimizationService {
         }
     }
 
+    // Initialize connection pool for better performance
+    async initializeConnectionPool() {
+        try {
+            for (let i = 0; i < this.maxConnections; i++) {
+                const connection = new sqlite3.Database(this.dbPath);
+                connection.configure('busyTimeout', 30000); // 30 second timeout
+
+                // Enable WAL mode for better concurrency
+                await new Promise((resolve, reject) => {
+                    connection.run('PRAGMA journal_mode = WAL', (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+
+                // Optimize SQLite settings
+                await new Promise((resolve, reject) => {
+                    connection.exec(`
+                        PRAGMA synchronous = NORMAL;
+                        PRAGMA cache_size = 10000;
+                        PRAGMA temp_store = MEMORY;
+                        PRAGMA mmap_size = 268435456;
+                        PRAGMA optimize;
+                    `, (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    });
+                });
+
+                this.connectionPool.push({
+                    connection,
+                    inUse: false,
+                    lastUsed: Date.now()
+                });
+            }
+
+            console.log(`✅ Database connection pool initialized with ${this.maxConnections} connections`);
+        } catch (error) {
+            console.error('Failed to initialize connection pool:', error);
+        }
+    }
+
+    // Get connection from pool
+    async getConnection() {
+        const availableConnection = this.connectionPool.find(conn => !conn.inUse);
+
+        if (availableConnection) {
+            availableConnection.inUse = true;
+            availableConnection.lastUsed = Date.now();
+            return availableConnection;
+        }
+
+        // If no connection available, wait and retry
+        await new Promise(resolve => setTimeout(resolve, 10));
+        return this.getConnection();
+    }
+
+    // Release connection back to pool
+    releaseConnection(poolConnection) {
+        poolConnection.inUse = false;
+        poolConnection.lastUsed = Date.now();
+    }
+
+    // Start query monitoring
+    startQueryMonitoring() {
+        // Monitor query performance every minute
+        setInterval(() => {
+            this.analyzeQueryPerformance();
+        }, 60000);
+
+        // Clean query cache every 5 minutes
+        setInterval(() => {
+            this.cleanQueryCache();
+        }, 5 * 60 * 1000);
+
+        // Generate optimization suggestions every 10 minutes
+        setInterval(() => {
+            this.generateOptimizationSuggestions();
+        }, 10 * 60 * 1000);
+    }
+
+    // Prepare statement for reuse
+    async prepareStatement(sql, key) {
+        if (this.preparedStatements.has(key)) {
+            return this.preparedStatements.get(key);
+        }
+
+        const poolConnection = await this.getConnection();
+
+        return new Promise((resolve, reject) => {
+            const stmt = poolConnection.connection.prepare(sql, (err) => {
+                this.releaseConnection(poolConnection);
+
+                if (err) {
+                    reject(err);
+                } else {
+                    this.preparedStatements.set(key, stmt);
+                    resolve(stmt);
+                }
+            });
+        });
+    }
+
     // Create optimal indexes for better performance
     async createOptimalIndexes() {
         const indexes = [
@@ -123,23 +238,265 @@ class DatabaseOptimizationService {
         console.log('✅ Database indexes optimized');
     }
 
-    // Execute query with performance tracking
-    async executeQuery(query, params = []) {
+    // Execute query with advanced optimization
+    async executeQuery(query, params = [], options = {}) {
+        const { useCache = true, cacheKey = null, cacheTTL = 300000 } = options; // 5 min default TTL
+        const startTime = Date.now();
+
+        // Check cache first
+        if (useCache) {
+            const cached = this.getFromQueryCache(cacheKey || this.generateQueryHash(query + JSON.stringify(params)));
+            if (cached) {
+                return cached;
+            }
+        }
+
+        // Use connection pool
+        const poolConnection = await this.getConnection();
+
         return new Promise((resolve, reject) => {
-            const startTime = Date.now();
-            
-            this.db.all(query, params, (err, rows) => {
+            poolConnection.connection.all(query, params, (err, rows) => {
                 const executionTime = Date.now() - startTime;
-                
+                this.releaseConnection(poolConnection);
+
                 if (err) {
                     this.logQueryPerformance(query, executionTime, 0, 0, true);
                     reject(err);
                 } else {
                     this.logQueryPerformance(query, executionTime, rows.length, rows.length);
+
+                    // Cache successful results
+                    if (useCache && rows.length > 0) {
+                        this.setQueryCache(cacheKey || this.generateQueryHash(query + JSON.stringify(params)), rows, cacheTTL);
+                    }
+
                     resolve(rows);
                 }
             });
         });
+    }
+
+    // Execute optimized query with prepared statements
+    async executeOptimizedQuery(sql, params = [], options = {}) {
+        const { useCache = true, preparedKey = null } = options;
+        const startTime = Date.now();
+
+        try {
+            // Use prepared statement if available
+            if (preparedKey) {
+                const stmt = await this.prepareStatement(sql, preparedKey);
+
+                return new Promise((resolve, reject) => {
+                    stmt.all(params, (err, rows) => {
+                        const executionTime = Date.now() - startTime;
+
+                        if (err) {
+                            this.logQueryPerformance(sql, executionTime, 0, 0, true);
+                            reject(err);
+                        } else {
+                            this.logQueryPerformance(sql, executionTime, rows.length, rows.length);
+                            resolve(rows);
+                        }
+                    });
+                });
+            } else {
+                return this.executeQuery(sql, params, options);
+            }
+        } catch (error) {
+            const executionTime = Date.now() - startTime;
+            this.logQueryPerformance(sql, executionTime, 0, 0, true);
+            throw error;
+        }
+    }
+
+    // Query cache management
+    setQueryCache(key, data, ttl) {
+        this.queryCache.set(key, {
+            data,
+            expires: Date.now() + ttl,
+            hits: 0
+        });
+    }
+
+    getFromQueryCache(key) {
+        const cached = this.queryCache.get(key);
+        if (cached && Date.now() < cached.expires) {
+            cached.hits++;
+            return cached.data;
+        } else if (cached) {
+            this.queryCache.delete(key);
+        }
+        return null;
+    }
+
+    cleanQueryCache() {
+        const now = Date.now();
+        let cleaned = 0;
+
+        for (const [key, value] of this.queryCache.entries()) {
+            if (now >= value.expires) {
+                this.queryCache.delete(key);
+                cleaned++;
+            }
+        }
+
+        if (cleaned > 0) {
+            console.log(`🧹 Cleaned ${cleaned} expired query cache entries`);
+        }
+    }
+
+    // Analyze query performance and suggest optimizations
+    async analyzeQueryPerformance() {
+        try {
+            const slowQueries = await this.executeQuery(`
+                SELECT query_pattern, AVG(execution_time) as avg_time, COUNT(*) as count,
+                       MAX(execution_time) as max_time, MIN(execution_time) as min_time
+                FROM query_performance
+                WHERE recorded_at > datetime('now', '-1 hour')
+                GROUP BY query_hash
+                HAVING avg_time > ?
+                ORDER BY avg_time DESC
+                LIMIT 10
+            `, [this.slowQueryThreshold]);
+
+            for (const query of slowQueries) {
+                await this.suggestQueryOptimization(query);
+            }
+        } catch (error) {
+            console.error('Error analyzing query performance:', error);
+        }
+    }
+
+    // Suggest query optimizations
+    async suggestQueryOptimization(queryInfo) {
+        const suggestions = [];
+        const pattern = queryInfo.query_pattern.toLowerCase();
+
+        // Check for missing indexes
+        if (pattern.includes('where') && !pattern.includes('index')) {
+            suggestions.push('Consider adding an index on WHERE clause columns');
+        }
+
+        // Check for SELECT *
+        if (pattern.includes('select *')) {
+            suggestions.push('Avoid SELECT * - specify only needed columns');
+        }
+
+        // Check for ORDER BY without LIMIT
+        if (pattern.includes('order by') && !pattern.includes('limit')) {
+            suggestions.push('Consider adding LIMIT to ORDER BY queries');
+        }
+
+        // Check for subqueries
+        if (pattern.includes('select') && pattern.split('select').length > 2) {
+            suggestions.push('Consider using JOINs instead of subqueries for better performance');
+        }
+
+        // Check for LIKE with leading wildcard
+        if (pattern.includes("like '%")) {
+            suggestions.push('Avoid LIKE with leading wildcards - consider full-text search');
+        }
+
+        if (suggestions.length > 0) {
+            console.log(`🔍 Query optimization suggestions for pattern: ${queryInfo.query_pattern}`);
+            console.log(`   Average time: ${queryInfo.avg_time.toFixed(2)}ms`);
+            suggestions.forEach(suggestion => console.log(`   - ${suggestion}`));
+        }
+    }
+
+    // Generate optimization suggestions
+    async generateOptimizationSuggestions() {
+        try {
+            const suggestions = [];
+
+            // Check database size
+            const dbSize = await this.getDatabaseSize();
+            if (dbSize > this.performanceThresholds.dbSize) {
+                suggestions.push({
+                    type: 'database_size',
+                    priority: 'medium',
+                    message: `Database size (${this.formatBytes(dbSize)}) exceeds threshold`,
+                    action: 'Consider archiving old data or running cleanup'
+                });
+            }
+
+            // Check for tables without indexes
+            const tablesWithoutIndexes = await this.findTablesWithoutIndexes();
+            if (tablesWithoutIndexes.length > 0) {
+                suggestions.push({
+                    type: 'missing_indexes',
+                    priority: 'high',
+                    message: `${tablesWithoutIndexes.length} tables may benefit from indexes`,
+                    action: `Add indexes to: ${tablesWithoutIndexes.join(', ')}`
+                });
+            }
+
+            // Check query cache efficiency
+            const cacheStats = this.getQueryCacheStats();
+            if (cacheStats.hitRate < 0.5) {
+                suggestions.push({
+                    type: 'cache_efficiency',
+                    priority: 'medium',
+                    message: `Query cache hit rate is low (${(cacheStats.hitRate * 100).toFixed(1)}%)`,
+                    action: 'Increase cache TTL or optimize frequently used queries'
+                });
+            }
+
+            return suggestions;
+        } catch (error) {
+            console.error('Error generating optimization suggestions:', error);
+            return [];
+        }
+    }
+
+    // Find tables that might benefit from indexes
+    async findTablesWithoutIndexes() {
+        try {
+            const tables = await this.executeQuery(`
+                SELECT name FROM sqlite_master
+                WHERE type='table' AND name NOT LIKE 'sqlite_%'
+            `);
+
+            const tablesNeedingIndexes = [];
+
+            for (const table of tables) {
+                const indexes = await this.executeQuery(`
+                    SELECT COUNT(*) as index_count
+                    FROM sqlite_master
+                    WHERE type='index' AND tbl_name=?
+                `, [table.name]);
+
+                const rowCount = await this.getTableRowCount(table.name);
+
+                // Suggest indexes for tables with many rows but few indexes
+                if (rowCount > 1000 && indexes[0].index_count < 2) {
+                    tablesNeedingIndexes.push(table.name);
+                }
+            }
+
+            return tablesNeedingIndexes;
+        } catch (error) {
+            console.error('Error finding tables without indexes:', error);
+            return [];
+        }
+    }
+
+    // Get query cache statistics
+    getQueryCacheStats() {
+        let totalHits = 0;
+        let totalEntries = 0;
+
+        for (const [key, value] of this.queryCache.entries()) {
+            totalHits += value.hits;
+            totalEntries++;
+        }
+
+        return {
+            entries: totalEntries,
+            totalHits,
+            hitRate: totalEntries > 0 ? totalHits / totalEntries : 0,
+            memoryUsage: this.queryCache.size
+        };
     }
 
     // Log query performance
@@ -342,42 +699,90 @@ class DatabaseOptimizationService {
         }
     }
 
-    // Get database statistics
+    // Get comprehensive database statistics
     async getDatabaseStatistics() {
         try {
             const stats = {};
-            
+
             // Database size
             stats.databaseSize = await this.getDatabaseSize();
-            
+
+            // Connection pool statistics
+            stats.connectionPool = {
+                totalConnections: this.connectionPool.length,
+                activeConnections: this.connectionPool.filter(conn => conn.inUse).length,
+                availableConnections: this.connectionPool.filter(conn => !conn.inUse).length
+            };
+
+            // Query cache statistics
+            stats.queryCache = this.getQueryCacheStats();
+
             // Table statistics
             const tableStats = await this.executeQuery(`
-                SELECT name, 
+                SELECT name,
                        (SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=m.name) as table_count
                 FROM sqlite_master m WHERE type='table' AND name NOT LIKE 'sqlite_%'
             `);
-            
+
             stats.tables = {};
             for (const table of tableStats) {
                 const rowCount = await this.getTableRowCount(table.name);
                 const tableSize = await this.getTableSize(table.name);
-                
+
                 stats.tables[table.name] = {
                     rowCount,
                     estimatedSize: tableSize
                 };
             }
-            
+
+            // Index statistics
+            stats.indexes = await this.getIndexStatistics();
+
             // Performance metrics
             stats.performance = await this.getPerformanceMetrics();
-            
+
             // Recent maintenance
             stats.lastMaintenance = await this.getLastMaintenanceOperations();
-            
+
+            // Optimization suggestions
+            stats.optimizationSuggestions = await this.generateOptimizationSuggestions();
+
             return stats;
         } catch (error) {
             console.error('Failed to get database statistics:', error);
             throw error;
+        }
+    }
+
+    // Get index statistics
+    async getIndexStatistics() {
+        try {
+            const indexes = await this.executeQuery(`
+                SELECT name, tbl_name, sql
+                FROM sqlite_master
+                WHERE type='index' AND name NOT LIKE 'sqlite_%'
+                ORDER BY tbl_name, name
+            `);
+
+            const indexStats = {
+                totalIndexes: indexes.length,
+                indexesByTable: {}
+            };
+
+            for (const index of indexes) {
+                if (!indexStats.indexesByTable[index.tbl_name]) {
+                    indexStats.indexesByTable[index.tbl_name] = [];
+                }
+                indexStats.indexesByTable[index.tbl_name].push({
+                    name: index.name,
+                    sql: index.sql
+                });
+            }
+
+            return indexStats;
+        } catch (error) {
+            console.error('Error getting index statistics:', error);
+            return { totalIndexes: 0, indexesByTable: {} };
         }
     }
 

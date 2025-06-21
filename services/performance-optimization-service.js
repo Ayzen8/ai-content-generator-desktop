@@ -1,6 +1,8 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs').promises;
+const advancedCachingService = require('./advanced-caching-service');
+const cdnOptimizationService = require('./cdn-optimization-service');
 
 class PerformanceOptimizationService {
     constructor() {
@@ -333,13 +335,20 @@ class PerformanceOptimizationService {
         }
     }
 
-    // API response caching wrapper
-    async cachedApiCall(apiFunction, cacheKey, cacheTTL = this.defaultCacheTTL) {
+    // API response caching wrapper with advanced caching
+    async cachedApiCall(apiFunction, cacheKey, options = {}) {
         const startTime = Date.now();
-        
+        const {
+            cacheTTL = this.defaultCacheTTL,
+            tags = [],
+            priority = 1,
+            compression = 'gzip',
+            namespace = 'api'
+        } = options;
+
         try {
-            // Try cache first
-            const cachedResult = await this.getCache(cacheKey);
+            // Try advanced cache first
+            const cachedResult = await advancedCachingService.get(cacheKey, namespace);
             if (cachedResult) {
                 const responseTime = Date.now() - startTime;
                 await this.recordMetric('api_response', 'cached_api_time', responseTime, 'ms', { cacheKey });
@@ -349,23 +358,51 @@ class PerformanceOptimizationService {
             // Execute API call
             const result = await apiFunction();
             const responseTime = Date.now() - startTime;
-            
+
             await this.recordMetric('api_response', 'api_time', responseTime, 'ms', { cacheKey });
 
-            // Cache successful result
+            // Cache successful result with advanced options
             if (result) {
-                await this.setCache(cacheKey, result, cacheTTL);
+                await advancedCachingService.set(cacheKey, result, {
+                    ttl: cacheTTL / 1000, // Convert to seconds
+                    tags,
+                    priority,
+                    compression,
+                    namespace
+                });
             }
 
             return result;
         } catch (error) {
             const responseTime = Date.now() - startTime;
-            await this.recordMetric('api_response', 'api_error', responseTime, 'ms', { 
+            await this.recordMetric('api_response', 'api_error', responseTime, 'ms', {
                 cacheKey,
-                error: error.message 
+                error: error.message
             });
             throw error;
         }
+    }
+
+    // Advanced cache invalidation
+    async invalidateCache(tags) {
+        try {
+            const invalidatedCount = await advancedCachingService.invalidateByTags(tags);
+            await this.recordMetric('cache', 'cache_invalidation', invalidatedCount, 'count', { tags });
+            return invalidatedCount;
+        } catch (error) {
+            console.error('Cache invalidation error:', error);
+            return 0;
+        }
+    }
+
+    // Get advanced cache statistics
+    async getAdvancedCacheStats() {
+        return advancedCachingService.getCacheStats();
+    }
+
+    // Get CDN optimization report
+    async getCDNOptimizationReport() {
+        return cdnOptimizationService.getOptimizationReport();
     }
 
     // Generate optimization suggestions
@@ -526,11 +563,15 @@ class PerformanceOptimizationService {
             const [
                 recentMetrics,
                 cacheStats,
+                advancedCacheStats,
+                cdnReport,
                 optimizationSuggestions,
                 systemStats
             ] = await Promise.all([
                 this.getRecentMetrics(),
                 this.getCacheStatistics(),
+                this.getAdvancedCacheStats(),
+                this.getCDNOptimizationReport(),
                 this.getOptimizationSuggestions(),
                 this.getSystemStatistics()
             ]);
@@ -538,6 +579,8 @@ class PerformanceOptimizationService {
             return {
                 recent_metrics: recentMetrics,
                 cache_statistics: cacheStats,
+                advanced_cache_statistics: advancedCacheStats,
+                cdn_optimization_report: cdnReport,
                 optimization_suggestions: optimizationSuggestions,
                 system_statistics: systemStats,
                 generated_at: new Date().toISOString()

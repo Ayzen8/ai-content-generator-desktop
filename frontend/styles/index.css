@@ -13,6 +13,10 @@
 @import url('./custom-niche-creator.css');
 @import url('./system-dashboard.css');
 @import url('./settings.css');
+@import url('./lazy-loading.css');
+@import url('./performance-dashboard.css');
+@import url('./performance-monitor.css');
+@import url('./system-status-dashboard.css');
 
 /* Global Dark Theme Styles */
 :root {

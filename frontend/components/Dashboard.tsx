@@ -3,16 +3,25 @@ import Card from './Card';
 import NicheList from './NicheList';
 import NicheForm from './NicheForm';
 import ContentGenerator from './ContentGenerator';
-import ContentHistory from './ContentHistory';
-import ContentVariations from './ContentVariations';
-import Analytics from './Analytics';
-import AdvancedAnalyticsDashboard from './AdvancedAnalyticsDashboard';
-import ContentTemplates from './ContentTemplates';
-import HashtagResearch from './HashtagResearch';
-import SystemDashboard from './SystemDashboard';
-import Settings from './Settings';
-import GrowthBot from './GrowthBot';
 import { ApiService } from '../services/api';
+import { LazyLoadErrorBoundary } from '../utils/lazyLoad';
+import { usePerformanceTracking } from './PerformanceMonitor';
+
+// Lazy load heavy components for better performance
+import {
+    LazyAdvancedAnalyticsWithFallback,
+    LazySystemDashboardWithFallback,
+    LazyCustomNicheCreatorWithFallback
+} from './LazyComponents';
+
+// Standard lazy loading for other components
+const LazyContentHistory = React.lazy(() => import('./ContentHistory'));
+const LazyContentVariations = React.lazy(() => import('./ContentVariations'));
+const LazyAnalytics = React.lazy(() => import('./Analytics'));
+const LazyContentTemplates = React.lazy(() => import('./ContentTemplates'));
+const LazyHashtagResearch = React.lazy(() => import('./HashtagResearch'));
+const LazySettings = React.lazy(() => import('./Settings'));
+const LazyGrowthBot = React.lazy(() => import('./GrowthBot'));
 
 interface DashboardStats {
   totalContent: number;
@@ -46,7 +55,7 @@ const setupSSE = (onMessage: (data: any) => void) => {
 const Dashboard: React.FC = () => {
     const [serviceStatus, setServiceStatus] = useState<'running' | 'stopped'>('stopped');
     const [notifications, setNotifications] = useState<string[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'templates' | 'hashtags' | 'analytics' | 'advanced-analytics' | 'niches' | 'system' | 'growth-bot' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'templates' | 'hashtags' | 'analytics' | 'advanced-analytics' | 'niches' | 'system' | 'growth-bot' | 'settings' | 'custom-niche'>('overview');
     const [stats, setStats] = useState<DashboardStats>({
         totalContent: 0,
         pendingContent: 0,
@@ -54,6 +63,10 @@ const Dashboard: React.FC = () => {
         totalNiches: 0
     });
     const [refreshKey, setRefreshKey] = useState(0);
+    const [showCustomNicheCreator, setShowCustomNicheCreator] = useState(false);
+
+    // Performance tracking for the Dashboard component
+    const { trackApiCall } = usePerformanceTracking('Dashboard');
 
     useEffect(() => {
         loadStats();
@@ -76,8 +89,8 @@ const Dashboard: React.FC = () => {
     const loadStats = async () => {
         try {
             const [contentStats, nicheStats] = await Promise.all([
-                ApiService.get('/api/content/stats'),
-                ApiService.get('/api/niches/stats')
+                trackApiCall(ApiService.get('/api/content/stats'), '/api/content/stats'),
+                trackApiCall(ApiService.get('/api/niches/stats'), '/api/niches/stats')
             ]);
 
             setStats({
@@ -169,6 +182,13 @@ const Dashboard: React.FC = () => {
                 >
                     <span className="tab-icon">🎯</span>
                     Niche Management
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'custom-niche' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('custom-niche')}
+                >
+                    <span className="tab-icon">✨</span>
+                    Custom Niche
                 </button>
                 <button
                     className={`tab-btn ${activeTab === 'growth-bot' ? 'active' : ''}`}
@@ -263,27 +283,49 @@ const Dashboard: React.FC = () => {
                 )}
 
                 {activeTab === 'variations' && (
-                    <ContentVariations />
+                    <LazyLoadErrorBoundary>
+                        <React.Suspense fallback={<div className="loading-fallback">Loading Content Variations...</div>}>
+                            <LazyContentVariations />
+                        </React.Suspense>
+                    </LazyLoadErrorBoundary>
                 )}
 
                 {activeTab === 'history' && (
-                    <ContentHistory />
+                    <LazyLoadErrorBoundary>
+                        <React.Suspense fallback={<div className="loading-fallback">Loading Content History...</div>}>
+                            <LazyContentHistory />
+                        </React.Suspense>
+                    </LazyLoadErrorBoundary>
                 )}
 
                 {activeTab === 'templates' && (
-                    <ContentTemplates />
+                    <LazyLoadErrorBoundary>
+                        <React.Suspense fallback={<div className="loading-fallback">Loading Templates...</div>}>
+                            <LazyContentTemplates />
+                        </React.Suspense>
+                    </LazyLoadErrorBoundary>
                 )}
 
                 {activeTab === 'hashtags' && (
-                    <HashtagResearch />
+                    <LazyLoadErrorBoundary>
+                        <React.Suspense fallback={<div className="loading-fallback">Loading Hashtag Research...</div>}>
+                            <LazyHashtagResearch />
+                        </React.Suspense>
+                    </LazyLoadErrorBoundary>
                 )}
 
                 {activeTab === 'analytics' && (
-                    <Analytics />
+                    <LazyLoadErrorBoundary>
+                        <React.Suspense fallback={<div className="loading-fallback">Loading Analytics...</div>}>
+                            <LazyAnalytics />
+                        </React.Suspense>
+                    </LazyLoadErrorBoundary>
                 )}
 
                 {activeTab === 'advanced-analytics' && (
-                    <AdvancedAnalyticsDashboard />
+                    <LazyLoadErrorBoundary>
+                        <LazyAdvancedAnalyticsWithFallback />
+                    </LazyLoadErrorBoundary>
                 )}
 
                 {activeTab === 'niches' && (
@@ -293,16 +335,35 @@ const Dashboard: React.FC = () => {
                     </div>
                 )}
 
+                {activeTab === 'custom-niche' && (
+                    <LazyLoadErrorBoundary>
+                        <LazyCustomNicheCreatorWithFallback
+                            onNicheCreated={handleNicheCreated}
+                            onClose={() => setActiveTab('niches')}
+                        />
+                    </LazyLoadErrorBoundary>
+                )}
+
                 {activeTab === 'system' && (
-                    <SystemDashboard />
+                    <LazyLoadErrorBoundary>
+                        <LazySystemDashboardWithFallback />
+                    </LazyLoadErrorBoundary>
                 )}
 
                 {activeTab === 'growth-bot' && (
-                    <GrowthBot />
+                    <LazyLoadErrorBoundary>
+                        <React.Suspense fallback={<div className="loading-fallback">Loading Growth Bot...</div>}>
+                            <LazyGrowthBot />
+                        </React.Suspense>
+                    </LazyLoadErrorBoundary>
                 )}
 
                 {activeTab === 'settings' && (
-                    <Settings />
+                    <LazyLoadErrorBoundary>
+                        <React.Suspense fallback={<div className="loading-fallback">Loading Settings...</div>}>
+                            <LazySettings />
+                        </React.Suspense>
+                    </LazyLoadErrorBoundary>
                 )}
             </div>
         </div>

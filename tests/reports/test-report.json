@@ -1,0 +1,45 @@
+{
+  "summary": {
+    "total_tests": 46,
+    "passed": 46,
+    "failed": 0,
+    "success_rate": "100.00",
+    "duration_ms": 3551,
+    "duration_formatted": "3s"
+  },
+  "results": {
+    "unit": {
+      "passed": 12,
+      "failed": 0,
+      "total": 12,
+      "exitCode": 0,
+      "output": "\n\n  Content Generation Service\n    generateContent()\n      ✔ should generate content with all required fields\n      ✔ should handle invalid niche ID\n      ✔ should validate content quality\n      ✔ should handle AI service errors gracefully\n    calculateQualityScore()\n      ✔ should calculate quality score based on content metrics\n      ✔ should penalize low-quality content\n      ✔ should reward comprehensive hashtags\n    Performance Tests\n      ✔ should generate content within acceptable time limits\n      ✔ should handle concurrent content generation\n    Memory Usage Tests\n      ✔ should not cause memory leaks during content generation\n    Data Validation Tests\n      ✔ should validate generated content structure\n      ✔ should handle malformed AI responses\n\n\n  12 passing (60ms)\n\n"
+    },
+    "integration": {
+      "passed": 29,
+      "failed": 0,
+      "total": 29,
+      "exitCode": 0,
+      "output": "\n\n  API Endpoints Integration Tests\n    Content Generation Endpoints\n      POST /api/content/generate\n        ✔ should generate content successfully\n        ✔ should return 400 for missing parameters\n        ✔ should return 404 for invalid niche ID\n      GET /api/content/history\n        ✔ should return content history\n        ✔ should support pagination\n      GET /api/content/stats\n        ✔ should return content statistics\n    Niche Management Endpoints\n      GET /api/niches\n        ✔ should return list of niches\n      POST /api/niches\n        ✔ should create a new niche\n        ✔ should return 400 for invalid niche data\n      GET /api/niches/stats\n        ✔ should return niche statistics\n    Analytics Endpoints\n      GET /api/analytics/dashboard\n        ✔ should return analytics dashboard data\n      GET /api/analytics/content/:id\n        ✔ should return analytics for specific content\n        ✔ should return 404 for non-existent content\n    Performance Endpoints\n      GET /api/performance/dashboard\n        ✔ should return performance dashboard data\n      POST /api/performance/cache/clear\n        ✔ should clear cache successfully\n      GET /api/cache/stats\n        ✔ should return cache statistics\n      POST /api/cache/invalidate\n        ✔ should invalidate cache by tags\n        ✔ should return 400 for missing tags\n    Database Optimization Endpoints\n      GET /api/database/statistics\n        ✔ should return database statistics\n      POST /api/database/optimize\n        ✔ should perform database vacuum\n        ✔ should perform database analysis\n        ✔ should return 400 for invalid operation\n      GET /api/database/optimization-suggestions\n        ✔ should return optimization suggestions\n    Error Handling\n      ✔ should handle 404 for non-existent endpoints\n      ✔ should handle malformed JSON requests\n      ✔ should include error tracking headers\n    Rate Limiting\n      ✔ should handle multiple concurrent requests\n    Response Time Performance\n      ✔ should respond to simple GET requests quickly\n      ✔ should handle database queries efficiently\n\n\n  29 passing (181ms)\n\n"
+    },
+    "e2e": {
+      "passed": 5,
+      "failed": 0,
+      "total": 5,
+      "exitCode": 0,
+      "output": "\n\n  End-to-End User Workflows\n    Complete Content Creation Workflow\nStep 1: Creating new niche...\n✅ Niche created with ID: 2\nStep 2: Verifying niche in list...\n✅ Niche verified in list\nStep 3: Generating content...\n✅ Content generated successfully\nStep 4: Verifying content in history...\n✅ Content verified in history\nStep 5: Checking analytics...\n✅ Analytics updated\nStep 6: Verifying niche statistics...\n✅ Niche statistics updated\n🎉 Complete content creation workflow successful!\n      ✔ should complete the full content creation process (548ms)\n    Performance Monitoring Workflow\nStep 1: Checking initial performance...\n✅ Initial performance metrics retrieved\nStep 2: Generating load for cache testing...\n✅ Load generated\nStep 3: Checking cache performance...\n✅ Cache hit rate: 80.0%\nStep 4: Testing cache invalidation...\n✅ Cache invalidation successful\nStep 5: Checking database optimization...\n✅ Database statistics retrieved\nStep 6: Running database optimization...\n✅ Database optimization completed\n🎉 Performance monitoring workflow successful!\n      ✔ should monitor and optimize performance\n    Analytics and Insights Workflow\nStep 1: Getting dashboard analytics...\n✅ Dashboard analytics retrieved\nStep 2: Getting advanced analytics...\n✅ Advanced analytics checked\nStep 3: Getting content trends...\n✅ Content trends retrieved\nStep 4: Getting optimization suggestions...\n✅ Optimization suggestions retrieved\n🎉 Analytics and insights workflow successful!\n      ✔ should provide comprehensive analytics insights\n    Error Recovery Workflow\nStep 1: Testing invalid niche ID handling...\n✅ Invalid niche ID handled correctly\nStep 2: Testing malformed request handling...\n✅ Malformed request handled correctly\nStep 3: Testing non-existent endpoint...\n✅ Non-existent endpoint handled correctly\nStep 4: Verifying system functionality after errors...\n✅ System remains functional after errors\n🎉 Error recovery workflow successful!\n      ✔ should handle and recover from errors gracefully\n    Data Consistency Workflow\nStep 1: Getting initial counts...\nInitial niches: 2, content: 1\nStep 2: Creating niche and content...\nStep 3: Verifying counts increased...\n✅ Data consistency maintained\nStep 4: Verifying statistics consistency...\n✅ Statistics consistency verified\n🎉 Data consistency workflow successful!\n      ✔ should maintain data consistency across operations (530ms)\n\n\n  5 passing (2s)\n\n"
+    }
+  },
+  "timestamp": "2025-06-21T11:43:13.778Z",
+  "environment": {
+    "node_version": "v22.16.0",
+    "platform": "win32",
+    "memory_usage": {
+      "rss": 42999808,
+      "heapTotal": 7139328,
+      "heapUsed": 5164496,
+      "external": 1764448,
+      "arrayBuffers": 15142
+    }
+  }
+}

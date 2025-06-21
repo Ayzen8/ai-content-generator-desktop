@@ -1,0 +1,456 @@
+/* System Status Dashboard Styles */
+.system-status-dashboard {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.status-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #333;
+}
+
+.status-header h2 {
+    color: #00ff88;
+    margin: 0;
+    font-size: 2rem;
+}
+
+.status-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.overall-health {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: #1a1a1a;
+    border-radius: 8px;
+    border: 1px solid #333;
+}
+
+.health-label {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.health-score {
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.health-score.healthy {
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.1);
+}
+
+.health-score.warning {
+    color: #ffaa00;
+    background: rgba(255, 170, 0, 0.1);
+}
+
+.health-score.critical {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.healthy {
+    background: #00ff88;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+
+.status-indicator.warning {
+    background: #ffaa00;
+    box-shadow: 0 0 8px rgba(255, 170, 0, 0.5);
+}
+
+.status-indicator.critical {
+    background: #ff4444;
+    box-shadow: 0 0 8px rgba(255, 68, 68, 0.5);
+}
+
+.auto-refresh-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.auto-refresh-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: #00ff88;
+}
+
+/* Component Status Grid */
+.component-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.component-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.component-card:hover {
+    border-color: #00ff88;
+    transform: translateY(-2px);
+}
+
+.component-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.component-header h3 {
+    color: #00ff88;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.component-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.component-status.healthy {
+    background: #00ff88;
+    color: #000;
+}
+
+.component-status.warning {
+    background: #ffaa00;
+    color: #000;
+}
+
+.component-status.critical {
+    background: #ff4444;
+    color: #fff;
+}
+
+.component-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.metric:last-child {
+    border-bottom: none;
+}
+
+.metric span:first-child {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.metric span:last-child {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* Performance Metrics */
+.performance-metrics-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.performance-metrics-card h3 {
+    color: #00ff88;
+    margin: 0 0 20px 0;
+    font-size: 1.2rem;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.metric-item {
+    background: #2a2a2a;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.metric-header span:first-child {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.metric-value {
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.uptime-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.uptime-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.uptime-dot.healthy {
+    background: #00ff88;
+    box-shadow: 0 0 4px rgba(0, 255, 136, 0.5);
+}
+
+.uptime-indicator span {
+    color: #00ff88;
+    font-size: 0.9rem;
+}
+
+/* Alerts */
+.alerts-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.alerts-card h3 {
+    color: #00ff88;
+    margin: 0 0 20px 0;
+    font-size: 1.2rem;
+}
+
+.alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.alert-item {
+    background: #2a2a2a;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 4px solid #ff4444;
+}
+
+.alert-item.warning {
+    border-left-color: #ffaa00;
+}
+
+.alert-item.critical {
+    border-left-color: #ff4444;
+}
+
+.alert-message {
+    color: #fff;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.alert-time {
+    color: #888;
+    font-size: 0.8rem;
+}
+
+/* Quick Actions */
+.quick-actions-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.quick-actions-card h3 {
+    color: #00ff88;
+    margin: 0 0 20px 0;
+    font-size: 1.2rem;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+/* Error Message */
+.error-message {
+    text-align: center;
+    padding: 60px 20px;
+    background: #1a1a1a;
+    border: 1px solid #ff4444;
+    border-radius: 12px;
+    margin: 20px;
+}
+
+.error-message h3 {
+    color: #ff4444;
+    margin: 0 0 15px 0;
+}
+
+.error-message p {
+    color: #ccc;
+    margin: 0 0 20px 0;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .system-status-dashboard {
+        padding: 15px;
+    }
+    
+    .status-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .status-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        width: 100%;
+    }
+    
+    .overall-health {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .component-status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Loading states */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    z-index: 10;
+}
+
+.component-card {
+    position: relative;
+}
+
+/* Real-time updates */
+.auto-refresh-enabled .metric-value,
+.auto-refresh-enabled .component-status,
+.auto-refresh-enabled .health-score {
+    transition: all 0.3s ease;
+}
+
+/* Status transitions */
+.component-status,
+.health-score {
+    transition: all 0.5s ease;
+}
+
+/* Hover effects */
+.component-card:hover .component-status {
+    transform: scale(1.05);
+}
+
+.metric-item:hover {
+    background: #333;
+    transition: background 0.3s ease;
+}
+
+/* Progress bar enhancements */
+.animated-progress {
+    margin-top: 8px;
+}
+
+/* Grid responsiveness */
+@media (max-width: 1200px) {
+    .component-status-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .component-status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}

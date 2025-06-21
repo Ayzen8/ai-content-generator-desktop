@@ -1,0 +1,116 @@
+{
+  "timestamp": "2025-06-21T11:43:25.701Z",
+  "environment": {
+    "node_version": "v22.16.0",
+    "platform": "win32",
+    "arch": "x64",
+    "memory_limit": {
+      "rss": 64618496,
+      "heapTotal": 30470144,
+      "heapUsed": 15902096,
+      "external": 2580247,
+      "arrayBuffers": 51540
+    }
+  },
+  "results": {
+    "api_endpoints": {
+      "Get Niches": {
+        "average_ms": 3.7238000000000007,
+        "min_ms": 2.0389,
+        "max_ms": 13.9202,
+        "iterations": 10
+      },
+      "Get Content History": {
+        "average_ms": 2.15562,
+        "min_ms": 1.7305,
+        "max_ms": 2.6833,
+        "iterations": 10
+      },
+      "Get Analytics Dashboard": {
+        "average_ms": 1.96307,
+        "min_ms": 1.5867,
+        "max_ms": 3.8167,
+        "iterations": 10
+      },
+      "Get Performance Dashboard": {
+        "average_ms": 1.83773,
+        "min_ms": 1.6093,
+        "max_ms": 2.147,
+        "iterations": 10
+      },
+      "Get Cache Stats": {
+        "average_ms": 1.7243600000000001,
+        "min_ms": 1.5964,
+        "max_ms": 1.9015,
+        "iterations": 10
+      }
+    },
+    "database_operations": {
+      "Insert Content": {
+        "average_ms": 14.309820000000002,
+        "min_ms": 6.1603,
+        "max_ms": 45.1942,
+        "iterations": 5
+      },
+      "Query Content History": {
+        "average_ms": 2.35896,
+        "min_ms": 2.1486,
+        "max_ms": 3.0076,
+        "iterations": 5
+      },
+      "Analytics Query": {
+        "average_ms": 2.2374599999999996,
+        "min_ms": 2.0485,
+        "max_ms": 2.4832,
+        "iterations": 5
+      },
+      "Database Statistics": {
+        "average_ms": 1.8122399999999999,
+        "min_ms": 1.6471,
+        "max_ms": 2.0928,
+        "iterations": 5
+      }
+    },
+    "memory_usage": {
+      "initial_heap_mb": 12.18,
+      "final_heap_mb": 12.19,
+      "increase_mb": 0.009999999999999787,
+      "rss_mb": 61.02,
+      "external_mb": 2.47
+    },
+    "concurrent_load": {
+      "1_concurrent": {
+        "requests": 1,
+        "duration_ms": 2,
+        "requests_per_second": 500,
+        "avg_response_time_ms": 2
+      },
+      "5_concurrent": {
+        "requests": 5,
+        "duration_ms": 7,
+        "requests_per_second": 714.29,
+        "avg_response_time_ms": 1.4
+      },
+      "10_concurrent": {
+        "requests": 10,
+        "duration_ms": 15,
+        "requests_per_second": 666.67,
+        "avg_response_time_ms": 1.5
+      },
+      "20_concurrent": {
+        "requests": 20,
+        "duration_ms": 31,
+        "requests_per_second": 645.16,
+        "avg_response_time_ms": 1.55
+      }
+    }
+  },
+  "summary": {
+    "average_api_response_time_ms": 2.2809160000000004,
+    "average_db_operation_time_ms": 5.17962,
+    "max_concurrent_requests": 20,
+    "max_throughput_req_per_sec": 714.29,
+    "memory_efficiency_score": "A",
+    "overall_performance_grade": "A"
+  }
+}
