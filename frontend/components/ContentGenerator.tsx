@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '../services/api';
+import SoundService from '../services/soundService';
 import ContentCard from './ContentCard';
 
 interface Niche {
@@ -76,13 +77,17 @@ const ContentGenerator: React.FC = () => {
     }
 
     setGenerating(true);
+    SoundService.playGenerating(); // Play sound when generation starts
+
     try {
       await ApiService.post('/api/generate-content', { niche_id: selectedNiche });
       await loadContent();
       setError(null);
+      SoundService.playSuccess(); // Play success sound
     } catch (error) {
       console.error('Error generating content:', error);
       setError('Failed to generate content. Please check your Gemini API key.');
+      SoundService.playError(); // Play error sound
     } finally {
       setGenerating(false);
     }
@@ -106,12 +111,43 @@ const ContentGenerator: React.FC = () => {
     return niche ? niche.name : 'Select a niche';
   };
 
+  const getSelectedNicheInfo = () => {
+    const niche = niches.find(n => n.id === selectedNiche);
+    if (!niche) return null;
+
+    const isSubNiche = niche.parent_id !== null;
+    const parentNiche = isSubNiche ? niches.find(n => n.id === niche.parent_id) : null;
+
+    return {
+      niche,
+      isSubNiche,
+      parentNiche,
+      displayName: isSubNiche && parentNiche
+        ? `${parentNiche.name} → ${niche.name}`
+        : niche.name
+    };
+  };
+
   const getContentStats = () => {
     const pending = content.filter(c => c.status === 'pending').length;
     const posted = content.filter(c => c.status === 'posted').length;
     const total = content.length;
-    
+
     return { pending, posted, total };
+  };
+
+  const renderNicheOptions = () => {
+    // Sort all niches alphabetically by name
+    const sortedNiches = niches.sort((a, b) => a.name.localeCompare(b.name));
+
+    return sortedNiches.map(niche => (
+      <option
+        key={niche.id}
+        value={niche.id}
+      >
+        {niche.name}
+      </option>
+    ));
   };
 
   const stats = getContentStats();
@@ -155,18 +191,11 @@ const ContentGenerator: React.FC = () => {
             onChange={(e) => setSelectedNiche(Number(e.target.value) || null)}
           >
             <option value="">Choose a niche...</option>
-            {niches
-              .sort((a, b) => a.name.localeCompare(b.name)) // Sort all niches alphabetically
-              .map(niche => (
-                <option key={niche.id} value={niche.id}>
-                  {niche.name}
-                </option>
-              ))
-            }
+            {renderNicheOptions()}
           </select>
         </div>
 
-        <button 
+        <button
           className="generate-btn"
           onClick={generateContent}
           disabled={!selectedNiche || generating}
@@ -174,6 +203,46 @@ const ContentGenerator: React.FC = () => {
           {generating ? '⏳ Generating...' : '✨ Generate Content'}
         </button>
       </div>
+
+      {/* Selected Niche Info */}
+      {selectedNiche && (
+        <div className="selected-niche-info">
+          <div className="niche-info-header">
+            <h4>📍 Selected Niche</h4>
+          </div>
+          <div className="niche-info-content">
+            {(() => {
+              const nicheInfo = getSelectedNicheInfo();
+              if (!nicheInfo) return null;
+
+              return (
+                <div className="niche-details">
+                  <div className="niche-name">
+                    {nicheInfo.isSubNiche && (
+                      <span className="niche-breadcrumb">
+                        📁 {nicheInfo.parentNiche?.name} →
+                      </span>
+                    )}
+                    <span className="current-niche">
+                      {nicheInfo.isSubNiche ? '├─' : '📁'} {nicheInfo.niche.name}
+                    </span>
+                  </div>
+                  <div className="niche-description">
+                    {nicheInfo.niche.description}
+                  </div>
+                  <div className="niche-keywords">
+                    {nicheInfo.niche.keywords.split(',').slice(0, 5).map((keyword, index) => (
+                      <span key={index} className="keyword-tag">
+                        {keyword.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Content Filters */}
       <div className="content-filters">

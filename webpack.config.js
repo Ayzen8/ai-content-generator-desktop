@@ -28,8 +28,5 @@ module.exports = {
         path: path.resolve(__dirname, 'dist'),
         clean: true,
     },
-    devtool: 'source-map',
-    externals: {
-        'electron': 'commonjs electron'
-    }
+    devtool: 'source-map'
 };

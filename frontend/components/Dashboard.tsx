@@ -3,6 +3,9 @@ import Card from './Card';
 import NicheList from './NicheList';
 import NicheForm from './NicheForm';
 import ContentGenerator from './ContentGenerator';
+import ContentHistory from './ContentHistory';
+import ContentVariations from './ContentVariations';
+import Analytics from './Analytics';
 import Settings from './Settings';
 import { ApiService } from '../services/api';
 
@@ -35,7 +38,7 @@ const setupSSE = (onMessage: (data: any) => void) => {
 const Dashboard: React.FC = () => {
     const [serviceStatus, setServiceStatus] = useState<'running' | 'stopped'>('stopped');
     const [notifications, setNotifications] = useState<string[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'niches' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'analytics' | 'niches' | 'settings'>('overview');
     const [stats, setStats] = useState<DashboardStats>({
         totalContent: 0,
         pendingContent: 0,
@@ -106,6 +109,28 @@ const Dashboard: React.FC = () => {
                 >
                     <span className="tab-icon">🤖</span>
                     Content Generator
+                </button>
+
+                <button
+                    className={`tab-btn ${activeTab === 'variations' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('variations')}
+                >
+                    <span className="tab-icon">🎨</span>
+                    Content Variations
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('history')}
+                >
+                    <span className="tab-icon">📚</span>
+                    Content History
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('analytics')}
+                >
+                    <span className="tab-icon">📊</span>
+                    Analytics
                 </button>
                 <button
                     className={`tab-btn ${activeTab === 'niches' ? 'active' : ''}`}
@@ -190,6 +215,18 @@ const Dashboard: React.FC = () => {
 
                 {activeTab === 'content' && (
                     <ContentGenerator />
+                )}
+
+                {activeTab === 'variations' && (
+                    <ContentVariations />
+                )}
+
+                {activeTab === 'history' && (
+                    <ContentHistory />
+                )}
+
+                {activeTab === 'analytics' && (
+                    <Analytics />
                 )}
 
                 {activeTab === 'niches' && (

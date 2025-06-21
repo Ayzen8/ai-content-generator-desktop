@@ -5,6 +5,9 @@ import './styles/index.css';
 import './styles/dashboard.css';
 import './styles/niche.css';
 import './styles/content.css';
+import './styles/history.css';
+import './styles/analytics.css';
+import './styles/settings.css';
 
 const App: React.FC = () => {
     return (

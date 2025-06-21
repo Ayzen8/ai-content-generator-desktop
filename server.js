@@ -7,14 +7,18 @@ const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const GeminiService = require('./services/gemini-service');
-const twitterService = require('./services/twitter-service');
-const instagramService = require('./services/instagram-service');
+const AIModelManager = require('./services/ai-model-manager');
+const ContentQualityService = require('./services/content-quality-service');
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-// Initialize Gemini service
+// Initialize services
 const geminiService = new GeminiService();
+const aiModelManager = new AIModelManager();
+const contentQualityService = new ContentQualityService();
+const twitterService = require('./services/twitter-service');
+const instagramService = require('./services/instagram-service');
 
 // Middleware
 app.use(cors());
@@ -110,6 +114,42 @@ function initializeDatabase() {
             is_active BOOLEAN DEFAULT 1,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS analytics_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_type TEXT NOT NULL, -- 'content_generated', 'content_posted', 'niche_created', 'user_action'
+            event_category TEXT NOT NULL, -- 'content', 'niche', 'user', 'system'
+            event_data TEXT, -- JSON data for the event
+            niche_id INTEGER,
+            content_id INTEGER,
+            session_id TEXT,
+            user_agent TEXT,
+            ip_address TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (niche_id) REFERENCES niches (id),
+            FOREIGN KEY (content_id) REFERENCES content (id)
+        );
+
+        CREATE TABLE IF NOT EXISTS analytics_metrics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            metric_name TEXT NOT NULL,
+            metric_value REAL NOT NULL,
+            metric_type TEXT NOT NULL, -- 'counter', 'gauge', 'histogram'
+            tags TEXT, -- JSON object with tags
+            recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS user_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT UNIQUE NOT NULL,
+            start_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+            end_time DATETIME,
+            duration_seconds INTEGER,
+            page_views INTEGER DEFAULT 0,
+            actions_count INTEGER DEFAULT 0,
+            user_agent TEXT,
+            ip_address TEXT
+        );
     `;
 
     db.exec(createTables, (err) => {
@@ -178,7 +218,567 @@ function broadcast(data) {
     });
 }
 
+// Analytics tracking functions
+function trackEvent(eventType, eventCategory, eventData = {}, nicheId = null, contentId = null, req = null) {
+    const sessionId = req?.headers['x-session-id'] || 'anonymous';
+    const userAgent = req?.headers['user-agent'] || '';
+    const ipAddress = req?.ip || req?.connection?.remoteAddress || '';
+
+    const query = `
+        INSERT INTO analytics_events (event_type, event_category, event_data, niche_id, content_id, session_id, user_agent, ip_address)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.run(query, [
+        eventType,
+        eventCategory,
+        JSON.stringify(eventData),
+        nicheId,
+        contentId,
+        sessionId,
+        userAgent,
+        ipAddress
+    ], (err) => {
+        if (err) {
+            console.error('Error tracking event:', err);
+        }
+    });
+}
+
+function recordMetric(metricName, metricValue, metricType = 'counter', tags = {}) {
+    const query = `
+        INSERT INTO analytics_metrics (metric_name, metric_value, metric_type, tags)
+        VALUES (?, ?, ?, ?)
+    `;
+
+    db.run(query, [metricName, metricValue, metricType, JSON.stringify(tags)], (err) => {
+        if (err) {
+            console.error('Error recording metric:', err);
+        }
+    });
+}
+
+function updateSession(sessionId, req) {
+    const userAgent = req?.headers['user-agent'] || '';
+    const ipAddress = req?.ip || req?.connection?.remoteAddress || '';
+
+    // Insert or update session
+    const query = `
+        INSERT OR REPLACE INTO user_sessions (session_id, user_agent, ip_address, page_views, actions_count)
+        VALUES (
+            ?,
+            ?,
+            ?,
+            COALESCE((SELECT page_views FROM user_sessions WHERE session_id = ?), 0) + 1,
+            COALESCE((SELECT actions_count FROM user_sessions WHERE session_id = ?), 0) + 1
+        )
+    `;
+
+    db.run(query, [sessionId, userAgent, ipAddress, sessionId, sessionId], (err) => {
+        if (err) {
+            console.error('Error updating session:', err);
+        }
+    });
+}
+
 // API Routes
+
+// Analytics API endpoints
+app.get('/api/analytics/overview', (req, res) => {
+    const { timeframe = '7d' } = req.query;
+
+    // Calculate date range
+    const now = new Date();
+    const startDate = new Date();
+
+    switch (timeframe) {
+        case '24h':
+            startDate.setHours(now.getHours() - 24);
+            break;
+        case '7d':
+            startDate.setDate(now.getDate() - 7);
+            break;
+        case '30d':
+            startDate.setDate(now.getDate() - 30);
+            break;
+        case '90d':
+            startDate.setDate(now.getDate() - 90);
+            break;
+        default:
+            startDate.setDate(now.getDate() - 7);
+    }
+
+    const queries = {
+        totalContent: `SELECT COUNT(*) as count FROM content WHERE created_at >= ?`,
+        totalNiches: `SELECT COUNT(*) as count FROM niches WHERE active = 1`,
+        contentByStatus: `
+            SELECT status, COUNT(*) as count
+            FROM content
+            WHERE created_at >= ?
+            GROUP BY status
+        `,
+        contentByNiche: `
+            SELECT n.name, COUNT(c.id) as count
+            FROM niches n
+            LEFT JOIN content c ON n.id = c.niche_id AND c.created_at >= ?
+            WHERE n.active = 1
+            GROUP BY n.id, n.name
+            ORDER BY count DESC
+            LIMIT 10
+        `,
+        dailyActivity: `
+            SELECT DATE(created_at) as date, COUNT(*) as count
+            FROM content
+            WHERE created_at >= ?
+            GROUP BY DATE(created_at)
+            ORDER BY date
+        `,
+        topEvents: `
+            SELECT event_type, COUNT(*) as count
+            FROM analytics_events
+            WHERE created_at >= ?
+            GROUP BY event_type
+            ORDER BY count DESC
+            LIMIT 10
+        `
+    };
+
+    Promise.all([
+        new Promise((resolve, reject) => {
+            db.get(queries.totalContent, [startDate.toISOString()], (err, row) => {
+                if (err) reject(err);
+                else resolve(row.count);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.get(queries.totalNiches, (err, row) => {
+                if (err) reject(err);
+                else resolve(row.count);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.all(queries.contentByStatus, [startDate.toISOString()], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.all(queries.contentByNiche, [startDate.toISOString()], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.all(queries.dailyActivity, [startDate.toISOString()], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.all(queries.topEvents, [startDate.toISOString()], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        })
+    ]).then(([totalContent, totalNiches, contentByStatus, contentByNiche, dailyActivity, topEvents]) => {
+        res.json({
+            timeframe,
+            overview: {
+                totalContent,
+                totalNiches,
+                contentByStatus,
+                contentByNiche,
+                dailyActivity,
+                topEvents
+            }
+        });
+    }).catch(err => {
+        console.error('Error fetching analytics overview:', err);
+        res.status(500).json({ error: 'Failed to fetch analytics data' });
+    });
+});
+
+app.get('/api/analytics/performance', (req, res) => {
+    const { timeframe = '7d' } = req.query;
+
+    const now = new Date();
+    const startDate = new Date();
+
+    switch (timeframe) {
+        case '24h':
+            startDate.setHours(now.getHours() - 24);
+            break;
+        case '7d':
+            startDate.setDate(now.getDate() - 7);
+            break;
+        case '30d':
+            startDate.setDate(now.getDate() - 30);
+            break;
+        default:
+            startDate.setDate(now.getDate() - 7);
+    }
+
+    const queries = {
+        generationTimes: `
+            SELECT
+                AVG(CAST((julianday(completed_at) - julianday(created_at)) * 86400 AS INTEGER)) as avg_seconds,
+                MIN(CAST((julianday(completed_at) - julianday(created_at)) * 86400 AS INTEGER)) as min_seconds,
+                MAX(CAST((julianday(completed_at) - julianday(created_at)) * 86400 AS INTEGER)) as max_seconds
+            FROM generation_jobs
+            WHERE status = 'completed' AND created_at >= ?
+        `,
+        successRate: `
+            SELECT
+                status,
+                COUNT(*) as count,
+                ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM generation_jobs WHERE created_at >= ?), 2) as percentage
+            FROM generation_jobs
+            WHERE created_at >= ?
+            GROUP BY status
+        `,
+        hourlyDistribution: `
+            SELECT
+                strftime('%H', created_at) as hour,
+                COUNT(*) as count
+            FROM content
+            WHERE created_at >= ?
+            GROUP BY strftime('%H', created_at)
+            ORDER BY hour
+        `
+    };
+
+    Promise.all([
+        new Promise((resolve, reject) => {
+            db.get(queries.generationTimes, [startDate.toISOString()], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.all(queries.successRate, [startDate.toISOString(), startDate.toISOString()], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        }),
+        new Promise((resolve, reject) => {
+            db.all(queries.hourlyDistribution, [startDate.toISOString()], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        })
+    ]).then(([generationTimes, successRate, hourlyDistribution]) => {
+        res.json({
+            timeframe,
+            performance: {
+                generationTimes: generationTimes || { avg_seconds: 0, min_seconds: 0, max_seconds: 0 },
+                successRate,
+                hourlyDistribution
+            }
+        });
+    }).catch(err => {
+        console.error('Error fetching performance analytics:', err);
+        res.status(500).json({ error: 'Failed to fetch performance data' });
+    });
+});
+
+// Track analytics event
+app.post('/api/analytics/track', (req, res) => {
+    const { eventType, eventCategory, eventData, nicheId, contentId } = req.body;
+
+    if (!eventType || !eventCategory) {
+        return res.status(400).json({ error: 'Event type and category are required' });
+    }
+
+    trackEvent(eventType, eventCategory, eventData, nicheId, contentId, req);
+    res.json({ success: true });
+});
+
+// AI Model Management API endpoints
+app.get('/api/ai-models', (req, res) => {
+    try {
+        const models = aiModelManager.getAllModels();
+        const stats = aiModelManager.getModelStats();
+
+        res.json({
+            models,
+            stats,
+            current: aiModelManager.getCurrentModel()
+        });
+    } catch (error) {
+        console.error('Error fetching AI models:', error);
+        res.status(500).json({ error: 'Failed to fetch AI models' });
+    }
+});
+
+app.get('/api/ai-models/available', (req, res) => {
+    try {
+        const availableModels = aiModelManager.getAvailableModels();
+        res.json(availableModels);
+    } catch (error) {
+        console.error('Error fetching available AI models:', error);
+        res.status(500).json({ error: 'Failed to fetch available AI models' });
+    }
+});
+
+app.post('/api/ai-models/set-current', (req, res) => {
+    const { modelId } = req.body;
+
+    if (!modelId) {
+        return res.status(400).json({ error: 'Model ID is required' });
+    }
+
+    try {
+        const success = aiModelManager.setCurrentModel(modelId);
+
+        if (success) {
+            const currentModel = aiModelManager.getCurrentModel();
+
+            // Track analytics event
+            trackEvent('ai_model_changed', 'system', {
+                previous_model: req.body.previousModel || 'unknown',
+                new_model: modelId,
+                model_name: currentModel.name
+            }, null, null, req);
+
+            res.json({
+                success: true,
+                currentModel,
+                message: `Successfully switched to ${currentModel.name}`
+            });
+        } else {
+            res.status(400).json({
+                error: 'Failed to set model. Model may not be available.'
+            });
+        }
+    } catch (error) {
+        console.error('Error setting current AI model:', error);
+        res.status(500).json({ error: 'Failed to set current AI model' });
+    }
+});
+
+app.post('/api/ai-models/test', (req, res) => {
+    const { modelId } = req.body;
+
+    if (!modelId) {
+        return res.status(400).json({ error: 'Model ID is required' });
+    }
+
+    aiModelManager.testModel(modelId)
+        .then(result => {
+            // Track analytics event
+            trackEvent('ai_model_tested', 'system', {
+                model_id: modelId,
+                test_result: result.success ? 'success' : 'failure',
+                error: result.error || null
+            }, null, null, req);
+
+            res.json(result);
+        })
+        .catch(error => {
+            console.error('Error testing AI model:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to test AI model'
+            });
+        });
+});
+
+app.get('/api/ai-models/comparison', (req, res) => {
+    try {
+        const comparison = aiModelManager.getModelComparison();
+        res.json(comparison);
+    } catch (error) {
+        console.error('Error fetching model comparison:', error);
+        res.status(500).json({ error: 'Failed to fetch model comparison' });
+    }
+});
+
+// Content Quality Analysis API endpoints
+app.post('/api/analyze-content-quality', async (req, res) => {
+    const { content, niche_id } = req.body;
+
+    if (!content) {
+        return res.status(400).json({ error: 'Content is required for quality analysis' });
+    }
+
+    try {
+        // Get niche details if provided
+        let niche = null;
+        if (niche_id) {
+            niche = await new Promise((resolve, reject) => {
+                db.get('SELECT * FROM niches WHERE id = ? AND active = 1', [niche_id], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                });
+            });
+        }
+
+        // Analyze content quality
+        const qualityAnalysis = contentQualityService.analyzeContent(content, niche);
+
+        // Track analytics event
+        trackEvent('content_quality_analyzed', 'content', {
+            overall_score: qualityAnalysis.overallScore,
+            grade: qualityAnalysis.grade,
+            viral_potential: qualityAnalysis.viralPotential.potential,
+            niche_id: niche_id || null,
+            niche_name: niche?.name || null
+        }, niche_id, null, req);
+
+        res.json({
+            success: true,
+            analysis: qualityAnalysis,
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('Error analyzing content quality:', error);
+        res.status(500).json({
+            error: 'Content quality analysis failed',
+            details: error.message
+        });
+    }
+});
+
+// Batch content quality analysis
+app.post('/api/analyze-content-batch', async (req, res) => {
+    const { contents } = req.body;
+
+    if (!contents || !Array.isArray(contents)) {
+        return res.status(400).json({ error: 'Contents array is required' });
+    }
+
+    if (contents.length > 10) {
+        return res.status(400).json({ error: 'Maximum 10 contents can be analyzed at once' });
+    }
+
+    try {
+        const analyses = [];
+
+        for (const item of contents) {
+            const { content, niche_id } = item;
+
+            // Get niche details if provided
+            let niche = null;
+            if (niche_id) {
+                niche = await new Promise((resolve, reject) => {
+                    db.get('SELECT * FROM niches WHERE id = ? AND active = 1', [niche_id], (err, row) => {
+                        if (err) reject(err);
+                        else resolve(row);
+                    });
+                });
+            }
+
+            // Analyze content quality
+            const qualityAnalysis = contentQualityService.analyzeContent(content, niche);
+
+            analyses.push({
+                content_id: item.id || null,
+                niche_id: niche_id || null,
+                analysis: qualityAnalysis
+            });
+        }
+
+        // Track analytics event
+        trackEvent('content_quality_batch_analyzed', 'content', {
+            batch_size: contents.length,
+            avg_score: analyses.reduce((sum, a) => sum + a.analysis.overallScore, 0) / analyses.length
+        }, null, null, req);
+
+        res.json({
+            success: true,
+            analyses,
+            summary: {
+                total_analyzed: analyses.length,
+                average_score: Math.round(analyses.reduce((sum, a) => sum + a.analysis.overallScore, 0) / analyses.length),
+                high_quality_count: analyses.filter(a => a.analysis.overallScore >= 80).length,
+                needs_improvement_count: analyses.filter(a => a.analysis.overallScore < 70).length
+            },
+            timestamp: new Date().toISOString()
+        });
+
+    } catch (error) {
+        console.error('Error in batch content quality analysis:', error);
+        res.status(500).json({
+            error: 'Batch content quality analysis failed',
+            details: error.message
+        });
+    }
+});
+
+// Get quality insights for a niche
+app.get('/api/quality-insights/:niche_id', async (req, res) => {
+    const { niche_id } = req.params;
+    const { timeframe = '30d' } = req.query;
+
+    try {
+        // Calculate date range
+        const now = new Date();
+        const startDate = new Date();
+
+        switch (timeframe) {
+            case '7d':
+                startDate.setDate(now.getDate() - 7);
+                break;
+            case '30d':
+                startDate.setDate(now.getDate() - 30);
+                break;
+            case '90d':
+                startDate.setDate(now.getDate() - 90);
+                break;
+            default:
+                startDate.setDate(now.getDate() - 30);
+        }
+
+        // Get quality analysis events for this niche
+        const qualityEvents = await new Promise((resolve, reject) => {
+            db.all(`
+                SELECT event_data, created_at
+                FROM analytics_events
+                WHERE event_type = 'content_quality_analyzed'
+                AND niche_id = ?
+                AND created_at >= ?
+                ORDER BY created_at DESC
+            `, [niche_id, startDate.toISOString()], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+
+        // Parse and analyze the data
+        const scores = qualityEvents.map(event => {
+            const data = JSON.parse(event.event_data);
+            return {
+                score: data.overall_score,
+                grade: data.grade,
+                viral_potential: data.viral_potential,
+                date: event.created_at
+            };
+        });
+
+        const insights = {
+            total_analyses: scores.length,
+            average_score: scores.length > 0 ? Math.round(scores.reduce((sum, s) => sum + s.score, 0) / scores.length) : 0,
+            score_trend: this.calculateTrend(scores),
+            grade_distribution: this.calculateGradeDistribution(scores),
+            viral_potential_distribution: this.calculateViralDistribution(scores),
+            recent_scores: scores.slice(0, 10)
+        };
+
+        res.json({
+            success: true,
+            insights,
+            timeframe
+        });
+
+    } catch (error) {
+        console.error('Error fetching quality insights:', error);
+        res.status(500).json({
+            error: 'Failed to fetch quality insights',
+            details: error.message
+        });
+    }
+});
 
 // Get dashboard stats
 app.get('/api/stats', (req, res) => {
@@ -259,6 +859,138 @@ app.post('/api/niches', (req, res) => {
     });
 });
 
+// Content Variation Generation API
+app.post('/api/generate-content-variation', async (req, res) => {
+    const { niche_id, style, emotion } = req.body;
+
+    if (!niche_id) {
+        return res.status(400).json({ error: 'Niche ID is required' });
+    }
+
+    try {
+        // Get niche details
+        const niche = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM niches WHERE id = ? AND active = 1', [niche_id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!niche) {
+            return res.status(404).json({ error: 'Niche not found' });
+        }
+
+        // Generate content with specific style and emotion using AI model manager
+        const content = await aiModelManager.generateContentWithStyle(niche, style, emotion);
+
+        res.json(content);
+
+        // Track analytics event
+        trackEvent('content_variation_generated', 'content', {
+            niche_name: niche.name,
+            style: style,
+            emotion: emotion,
+            generation_time: Date.now()
+        }, niche_id, null, req);
+
+    } catch (error) {
+        console.error('Content variation generation error:', error);
+        res.status(500).json({
+            error: 'Content variation generation failed',
+            details: error.message
+        });
+    }
+});
+
+// Save Content Variation API
+app.post('/api/save-content-variation', async (req, res) => {
+    const { niche_id, content, style, emotion } = req.body;
+
+    if (!niche_id || !content) {
+        return res.status(400).json({ error: 'Niche ID and content are required' });
+    }
+
+    try {
+        // Get niche details
+        const niche = await new Promise((resolve, reject) => {
+            db.get('SELECT * FROM niches WHERE id = ? AND active = 1', [niche_id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+
+        if (!niche) {
+            return res.status(404).json({ error: 'Niche not found' });
+        }
+
+        // Store in database
+        const insertQuery = `
+            INSERT INTO content (niche_id, type, title, content, hashtags, status, metadata)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `;
+
+        const contentData = JSON.stringify({
+            tweet: content.tweet,
+            instagram: content.instagram,
+            imagePrompt: content.imagePrompt
+        });
+
+        const metadata = JSON.stringify({
+            style: style,
+            emotion: emotion,
+            variation: true
+        });
+
+        db.run(insertQuery, [
+            niche_id,
+            'variation',
+            `${style} content for ${niche.name}`,
+            contentData,
+            content.hashtags,
+            'pending',
+            metadata
+        ], function(err) {
+            if (err) {
+                console.error('Error storing content variation:', err);
+                res.status(500).json({ error: 'Failed to store content variation' });
+            } else {
+                const savedContent = {
+                    id: this.lastID,
+                    niche_id,
+                    niche_name: niche.name,
+                    ...content,
+                    style,
+                    emotion,
+                    created_at: new Date().toISOString(),
+                    status: 'pending'
+                };
+
+                res.json({ success: true, content: savedContent });
+
+                // Track analytics event
+                trackEvent('content_variation_saved', 'content', {
+                    niche_name: niche.name,
+                    style: style,
+                    emotion: emotion
+                }, niche_id, this.lastID, req);
+
+                // Broadcast to SSE clients
+                broadcast({
+                    type: 'content_variation_saved',
+                    content: savedContent
+                });
+            }
+        });
+
+    } catch (error) {
+        console.error('Error saving content variation:', error);
+        res.status(500).json({
+            error: 'Failed to save content variation',
+            details: error.message
+        });
+    }
+});
+
 // Content Generation API
 app.post('/api/generate-content', async (req, res) => {
     const { niche_id, count = 1 } = req.body;
@@ -280,8 +1012,8 @@ app.post('/api/generate-content', async (req, res) => {
             return res.status(404).json({ error: 'Niche not found' });
         }
 
-        // Generate content using Gemini
-        const content = await geminiService.generateContent(niche);
+        // Generate content using AI model manager
+        const content = await aiModelManager.generateContent(niche);
 
         // Store in database
         const insertQuery = `
@@ -317,6 +1049,16 @@ app.post('/api/generate-content', async (req, res) => {
                 };
 
                 res.json(generatedContent);
+
+                // Track analytics event
+                trackEvent('content_generated', 'content', {
+                    niche_name: niche.name,
+                    content_type: 'complete',
+                    generation_time: Date.now()
+                }, niche_id, this.lastID, req);
+
+                // Record metrics
+                recordMetric('content_generated_total', 1, 'counter', { niche: niche.name });
 
                 // Broadcast to SSE clients
                 broadcast({

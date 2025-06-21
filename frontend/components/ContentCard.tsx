@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import ApiService from '../services/api';
+import SoundService from '../services/soundService';
+import ContentQualityAnalyzer from './ContentQualityAnalyzer';
 
 interface ContentCardProps {
   content: {
@@ -24,6 +26,8 @@ const ContentCard: React.FC<ContentCardProps> = ({ content, onContentUpdate }) =
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [showQualityAnalysis, setShowQualityAnalysis] = useState(false);
+  const [qualityScore, setQualityScore] = useState<number | null>(null);
 
   const updateStatus = async (newStatus: string) => {
     setLoading(true);
@@ -42,9 +46,11 @@ const ContentCard: React.FC<ContentCardProps> = ({ content, onContentUpdate }) =
     try {
       await navigator.clipboard.writeText(text);
       setCopiedField(field);
+      SoundService.playCopied(); // Play copy sound
       setTimeout(() => setCopiedField(null), 2000);
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
+      SoundService.playError(); // Play error sound
     }
   };
 
@@ -70,14 +76,17 @@ const ContentCard: React.FC<ContentCardProps> = ({ content, onContentUpdate }) =
       });
 
       if (response.success) {
+        SoundService.playPosted(); // Play success sound
         alert(`✅ Posted to X successfully!\nView at: ${response.url}`);
         onContentUpdate();
       } else {
+        SoundService.playError(); // Play error sound
         alert(`❌ Failed to post to X: ${response.error}`);
       }
     } catch (error: any) {
       console.error('Error posting to Twitter:', error);
       const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+      SoundService.playError(); // Play error sound
       alert(`❌ Failed to post to X: ${errorMessage}`);
     } finally {
       setPosting(false);
@@ -231,7 +240,34 @@ const ContentCard: React.FC<ContentCardProps> = ({ content, onContentUpdate }) =
         >
           {loading ? '⏳ Generating...' : '🔄 Regenerate'}
         </button>
+
+        <button
+          className="action-btn quality-btn"
+          onClick={() => setShowQualityAnalysis(!showQualityAnalysis)}
+          disabled={loading || posting}
+        >
+          {qualityScore ? `📊 Quality: ${qualityScore}` : '📊 Analyze Quality'}
+        </button>
       </div>
+
+      {/* Quality Analysis Section */}
+      {showQualityAnalysis && (
+        <div className="quality-analysis-section">
+          <ContentQualityAnalyzer
+            content={{
+              tweet: content.tweet,
+              instagram: content.instagram,
+              hashtags: content.hashtags,
+              imagePrompt: content.imagePrompt
+            }}
+            nicheId={content.niche_id}
+            onAnalysisComplete={(analysis) => {
+              setQualityScore(analysis.overallScore);
+              SoundService.playSuccess();
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

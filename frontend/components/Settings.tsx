@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ApiService } from '../services/api';
+import SoundService from '../services/soundService';
+import AIModelSelector from './AIModelSelector';
 
 interface SettingsData {
   geminiApiKey: string;
@@ -46,6 +48,7 @@ const Settings: React.FC = () => {
   const [instagramAccounts, setInstagramAccounts] = useState<InstagramAccount[]>([]);
   const [rateLimits, setRateLimits] = useState<any>(null);
   const [instagramRateLimits, setInstagramRateLimits] = useState<any>(null);
+  const [soundEnabled, setSoundEnabled] = useState(SoundService.isEnabledStatic());
 
   useEffect(() => {
     loadSettings();
@@ -244,6 +247,16 @@ const Settings: React.FC = () => {
       setMessage({ type: 'error', text: '❌ Failed to test Instagram API connection' });
     } finally {
       setTestingInstagram(false);
+    }
+  };
+
+  const toggleSoundNotifications = () => {
+    const newState = !soundEnabled;
+    setSoundEnabled(newState);
+    SoundService.setEnabled(newState);
+
+    if (newState) {
+      SoundService.playSuccess(); // Test sound when enabling
     }
   };
 
@@ -452,6 +465,46 @@ const Settings: React.FC = () => {
                 Twitter Developer Portal
               </a>
             </small>
+          </div>
+        </div>
+
+        <div className="settings-section">
+          <h3>🤖 AI Model Configuration</h3>
+          <AIModelSelector />
+        </div>
+
+        <div className="settings-section">
+          <h3>🔊 User Experience</h3>
+
+          <div className="form-group">
+            <div className="toggle-setting">
+              <div className="toggle-info">
+                <label htmlFor="soundNotifications">Sound Notifications</label>
+                <small className="help-text">
+                  Play audio feedback for content generation, copying, and posting actions
+                </small>
+              </div>
+              <div className="toggle-controls">
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    id="soundNotifications"
+                    checked={soundEnabled}
+                    onChange={toggleSoundNotifications}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => SoundService.testSounds()}
+                  disabled={!soundEnabled}
+                  className="test-sounds-btn"
+                  title="Test all sound notifications"
+                >
+                  🎵 Test Sounds
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
