@@ -27,22 +27,13 @@ module.exports = (env, argv) => {
             extensions: ['.tsx', '.ts', '.js'],
         },
         output: {
-            filename: isProduction ? 'bundle.[contenthash].js' : 'bundle.js',
+            filename: 'bundle.js',
             path: path.resolve(__dirname, 'dist'),
             clean: true,
         },
         devtool: isProduction ? false : 'source-map',
         optimization: {
-            splitChunks: isProduction ? {
-                chunks: 'all',
-                cacheGroups: {
-                    vendor: {
-                        test: /[\\/]node_modules[\\/]/,
-                        name: 'vendors',
-                        chunks: 'all',
-                    },
-                },
-            } : false,
+            splitChunks: false,
         },
         performance: {
             maxAssetSize: 500000,
