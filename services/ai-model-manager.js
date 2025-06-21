@@ -6,7 +6,7 @@ class AIModelManager {
             'gemini-2.5-flash': {
                 name: 'Gemini 2.5 Flash',
                 provider: 'Google',
-                description: 'Latest Gemini model with fast response times and high quality',
+                description: 'Google\'s latest and fastest model with excellent quality and speed. Perfect for real-time content generation.',
                 icon: '🚀',
                 service: new GeminiService(),
                 available: true,
@@ -15,25 +15,16 @@ class AIModelManager {
             'gpt-4-turbo': {
                 name: 'GPT-4 Turbo',
                 provider: 'OpenAI',
-                description: 'Latest GPT-4 model with improved speed and capabilities',
+                description: 'OpenAI\'s latest model with improved speed and capabilities. Versatile for various content types.',
                 icon: '⚡',
                 service: null, // Will be implemented
                 available: false,
                 features: ['Latest GPT', 'Fast Response', 'Versatile', 'Creative']
-            },
-            'gpt-3.5-turbo': {
-                name: 'GPT-3.5 Turbo',
-                provider: 'OpenAI',
-                description: 'Cost-effective OpenAI model with good performance',
-                icon: '💰',
-                service: null, // Will be implemented
-                available: false,
-                features: ['Cost Effective', 'Fast', 'Reliable', 'Good Quality']
             }
         };
 
         this.currentModel = 'gemini-2.5-flash';
-        this.fallbackModel = 'gpt-3.5-turbo';
+        this.fallbackModel = 'gpt-4-turbo';
     }
 
     // Get all available models
@@ -104,7 +95,7 @@ class AIModelManager {
     // Generate content with specific style
     async generateContentWithStyle(niche, style, emotion) {
         const model = this.models[this.currentModel];
-        
+
         if (!model || !model.available || !model.service) {
             throw new Error(`Model ${this.currentModel} is not available`);
         }
@@ -118,7 +109,7 @@ class AIModelManager {
             }
         } catch (error) {
             console.error(`Error with ${this.currentModel}:`, error);
-            
+
             // Try fallback model
             if (this.fallbackModel !== this.currentModel && this.models[this.fallbackModel]?.available) {
                 console.log(`Falling back to ${this.fallbackModel} for style generation`);
@@ -134,7 +125,44 @@ class AIModelManager {
                     throw new Error(`Both primary and fallback models failed: ${error.message}`);
                 }
             }
-            
+
+            throw error;
+        }
+    }
+
+    // Improve content based on quality analysis
+    async improveContent(originalContent, analysis, niche = null) {
+        const model = this.models[this.currentModel];
+
+        if (!model || !model.available || !model.service) {
+            throw new Error(`Model ${this.currentModel} is not available`);
+        }
+
+        try {
+            if (model.service.improveContent) {
+                return await model.service.improveContent(originalContent, analysis, niche);
+            } else {
+                throw new Error('Content improvement not supported by current model');
+            }
+        } catch (error) {
+            console.error(`Error improving content with ${this.currentModel}:`, error);
+
+            // Try fallback model
+            if (this.fallbackModel !== this.currentModel && this.models[this.fallbackModel]?.available) {
+                console.log(`Falling back to ${this.fallbackModel} for content improvement`);
+                try {
+                    const fallbackService = this.models[this.fallbackModel].service;
+                    if (fallbackService.improveContent) {
+                        return await fallbackService.improveContent(originalContent, analysis, niche);
+                    } else {
+                        throw new Error('Content improvement not supported by fallback model');
+                    }
+                } catch (fallbackError) {
+                    console.error(`Fallback model ${this.fallbackModel} also failed:`, fallbackError);
+                    throw new Error(`Both primary and fallback models failed: ${error.message}`);
+                }
+            }
+
             throw error;
         }
     }

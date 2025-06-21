@@ -177,7 +177,7 @@ const SocialMediaIntegration: React.FC = () => {
                     <div className="platform-header">
                         <div className="platform-info">
                             <span className="platform-icon">🐦</span>
-                            <h3>Twitter / X</h3>
+                            <h3>X & Instagram</h3>
                         </div>
                         <div className="connection-status">
                             {twitterAccounts.length > 0 ? (
@@ -209,13 +209,13 @@ const SocialMediaIntegration: React.FC = () => {
                         </div>
                     ) : (
                         <div className="connection-actions">
-                            <p>Connect your Twitter account to start posting content automatically.</p>
-                            <button 
+                            <p>Connect your X account to start posting content automatically.</p>
+                            <button
                                 onClick={connectTwitter}
                                 disabled={loading}
                                 className="btn btn-primary"
                             >
-                                {loading ? '🔄 Connecting...' : '🔗 Connect Twitter'}
+                                {loading ? '🔄 Connecting...' : '🔗 Connect X Account'}
                             </button>
                         </div>
                     )}
@@ -317,7 +317,7 @@ const SocialMediaIntegration: React.FC = () => {
                                         {twitterAccounts.length > 0 && (
                                             <label>
                                                 <input type="checkbox" value="twitter" />
-                                                <span>🐦 Twitter</span>
+                                                <span>🐦 X</span>
                                             </label>
                                         )}
                                         {instagramAccounts.length > 0 && (
@@ -343,7 +343,7 @@ const SocialMediaIntegration: React.FC = () => {
             <div className="integration-help">
                 <h3>💡 Tips</h3>
                 <ul>
-                    <li><strong>Twitter:</strong> Posts are limited to 280 characters</li>
+                    <li><strong>X:</strong> Posts are limited to 280 characters</li>
                     <li><strong>Instagram:</strong> Requires business account for API access</li>
                     <li><strong>Scheduling:</strong> Plan your posts for optimal engagement times</li>
                     <li><strong>Analytics:</strong> Track performance across all platforms</li>

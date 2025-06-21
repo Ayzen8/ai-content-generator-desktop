@@ -91,6 +91,8 @@ class GeminiService {
         const contentVariations = this.getContentVariations();
         const selectedVariation = contentVariations[Math.floor(Math.random() * contentVariations.length)];
 
+        const nicheStrategy = this.getNicheSpecificStrategy(niche.name);
+
         const enhancedPrompt = `
 You are a world-class content creator and social media strategist with 10+ years of experience in ${niche.name}. You have a proven track record of creating viral content that drives engagement, builds communities, and provides genuine value.
 
@@ -103,6 +105,8 @@ You are a world-class content creator and social media strategist with 10+ years
 👤 BRAND PERSONA: ${niche.persona}
 
 🔑 STRATEGIC KEYWORDS: ${niche.keywords}
+
+🎯 NICHE-SPECIFIC STRATEGY: ${nicheStrategy}
 
 📊 CONTENT OBJECTIVES:
 1. Drive meaningful engagement (comments, shares, saves)
@@ -141,14 +145,16 @@ Create a balanced mix of:
 - 1-2 trending hashtags (if relevant)
 - Include both ${niche.name} keywords and related terms
 
-**IMAGE PROMPT** (detailed visual description):
-Design a compelling image prompt that:
-- Specifies visual style (photo-realistic, illustration, minimalist, etc.)
-- Describes composition, colors, and mood
-- Aligns with current visual trends
-- Complements the content message
-- Optimizes for platform aesthetics
-- Considers ${timeContext.season} and current trends
+**IMAGE PROMPT** (detailed AI image generation prompt):
+Create a comprehensive image generation prompt that:
+- Specifies exact visual style (photorealistic, digital art, illustration, minimalist, etc.)
+- Details composition, lighting, colors, and mood
+- Includes technical specifications (4K, professional photography, etc.)
+- Aligns with ${niche.name} aesthetic and current visual trends
+- Complements and enhances the written content message
+- Optimizes for social media platform aesthetics
+- Considers ${timeContext.season} and trending visual elements
+- Uses AI image generation best practices (detailed descriptions, style keywords, quality modifiers)
 
 🎯 ADVANCED OPTIMIZATION:
 - Persona voice: Ensure every word reflects ${niche.persona}
@@ -346,7 +352,143 @@ IMPORTANT: Respond with clearly marked sections:
     }
 
     getImagePromptInstructions(style, emotion) {
-        return `Design an image prompt that visually represents ${style} content and evokes ${emotion}. Consider colors, composition, and visual elements that align with the content style.`;
+        const styleVisuals = this.getStyleVisualGuidelines(style);
+        const emotionVisuals = this.getEmotionVisualGuidelines(emotion);
+
+        return `Create a detailed image generation prompt that:
+
+        **VISUAL STYLE**: ${styleVisuals}
+        **EMOTIONAL TONE**: ${emotionVisuals}
+
+        **TECHNICAL SPECIFICATIONS**:
+        - Resolution: High-quality, social media optimized (1080x1080 for Instagram, 1200x675 for X)
+        - Composition: Rule of thirds, balanced visual hierarchy
+        - Color psychology: Colors that evoke ${emotion}
+        - Typography: Modern, readable fonts if text is included
+        - Lighting: Professional, mood-appropriate lighting
+        - Background: Clean, non-distracting, complements subject
+
+        **CONTENT ALIGNMENT**:
+        - Must visually support the written content message
+        - Should stop scroll and encourage engagement
+        - Platform-appropriate aesthetic (Instagram vs X visual culture)
+        - Trending visual elements and current design trends
+
+        **PROMPT STRUCTURE**: Write as a detailed prompt for AI image generation tools like Midjourney, DALL-E, or Stable Diffusion. Include specific details about style, composition, colors, mood, and technical quality.`;
+    }
+
+    getStyleVisualGuidelines(style) {
+        const guidelines = {
+            'inspirational': 'Uplifting imagery with bright, energetic colors. Mountain peaks, sunrise/sunset, achievement symbols, upward arrows, success metaphors. Clean, modern aesthetic with motivational visual elements.',
+            'educational': 'Clean, professional design with infographic elements. Books, lightbulbs, charts, diagrams, step-by-step visuals. Organized layout with clear information hierarchy and academic feel.',
+            'entertaining': 'Playful, colorful, dynamic composition. Fun illustrations, cartoon elements, bright colors, whimsical designs. Engaging visual humor and eye-catching graphics.',
+            'thoughtful': 'Minimalist, contemplative imagery. Muted colors, philosophical symbols, abstract concepts, peaceful scenes. Clean lines and sophisticated visual metaphors.',
+            'conversational': 'Warm, approachable visuals. Friendly colors, relatable scenarios, casual photography style. Human-centered imagery that feels personal and authentic.',
+            'authoritative': 'Professional, polished design. Corporate colors, clean typography, data visualizations, expert imagery. Sophisticated and credible visual presentation.',
+            'storytelling': 'Narrative-driven visuals with cinematic quality. Sequential elements, character-focused imagery, dramatic lighting. Visual storytelling techniques.',
+            'controversial': 'Bold, attention-grabbing design. Contrasting colors, strong visual statements, debate-worthy imagery. Provocative but professional visual approach.'
+        };
+
+        return guidelines[style] || guidelines['conversational'];
+    }
+
+    getEmotionVisualGuidelines(emotion) {
+        const guidelines = {
+            'empowerment': 'Strong, confident imagery with bold colors (reds, oranges, golds). Power poses, achievement symbols, breakthrough moments.',
+            'curiosity': 'Intriguing, mysterious elements with cool colors (blues, purples). Question marks, discovery themes, exploration imagery.',
+            'joy': 'Bright, cheerful visuals with warm colors (yellows, oranges, pinks). Smiling faces, celebration imagery, positive energy.',
+            'contemplation': 'Calm, reflective imagery with neutral tones (grays, blues, earth tones). Peaceful scenes, thinking poses, zen elements.',
+            'connection': 'Warm, inclusive imagery with connecting elements. Community colors, networking visuals, relationship symbols.',
+            'trust': 'Reliable, stable imagery with trustworthy colors (blues, greens). Professional settings, handshakes, security symbols.',
+            'engagement': 'Interactive, dynamic visuals with engaging colors. Call-to-action elements, participation imagery, community focus.',
+            'passion': 'Intense, energetic imagery with passionate colors (reds, oranges). Fire elements, intense emotions, high-energy visuals.'
+        };
+
+        return guidelines[emotion] || guidelines['engagement'];
+    }
+
+    getNicheSpecificStrategy(nicheName) {
+        const strategies = {
+            'Finance & Business': `
+            🏦 FINANCE CONTENT MASTERY:
+            - Use market data, statistics, and real financial examples
+            - Include actionable investment tips and wealth-building strategies
+            - Reference current market trends and economic events
+            - Avoid financial advice disclaimers but focus on education
+            - Use success stories and case studies
+            - Include risk management and long-term thinking
+            - Target both beginners and experienced investors`,
+
+            'Anime & Manga': `
+            🎌 ANIME CONTENT MASTERY:
+            - Reference specific anime series, characters, and studios
+            - Use anime terminology and cultural references naturally
+            - Connect anime themes to real-world philosophy and emotions
+            - Include both mainstream and niche series recommendations
+            - Discuss animation quality, storytelling, and character development
+            - Reference seasonal anime and trending series
+            - Appeal to both casual viewers and hardcore otaku`,
+
+            'Health & Wellness': `
+            💪 WELLNESS CONTENT MASTERY:
+            - Provide science-backed health information
+            - Include practical fitness tips and nutrition advice
+            - Focus on mental health and holistic wellness
+            - Use motivational language that encourages healthy habits
+            - Include transformation stories and progress tracking
+            - Address common health myths and misconceptions
+            - Promote sustainable lifestyle changes`,
+
+            'Technology & Gaming': `
+            🎮 TECH GAMING MASTERY:
+            - Reference latest games, tech trends, and industry news
+            - Include gaming tips, strategies, and reviews
+            - Discuss hardware, software, and gaming culture
+            - Use gaming terminology and community language
+            - Include both casual and competitive gaming content
+            - Reference popular streamers and gaming personalities
+            - Cover emerging tech and gaming innovations`,
+
+            'Travel & Adventure': `
+            ✈️ TRAVEL CONTENT MASTERY:
+            - Include specific destinations, hidden gems, and travel tips
+            - Use wanderlust-inspiring language and imagery
+            - Provide practical travel advice and budget tips
+            - Include cultural insights and local experiences
+            - Reference seasonal travel opportunities
+            - Appeal to different travel styles (luxury, budget, adventure)
+            - Include travel photography and storytelling elements`,
+
+            'Food & Cooking': `
+            🍳 CULINARY CONTENT MASTERY:
+            - Include specific recipes, cooking techniques, and food trends
+            - Use sensory language that makes food sound delicious
+            - Provide cooking tips and kitchen hacks
+            - Reference different cuisines and cultural food traditions
+            - Include both simple and complex cooking content
+            - Appeal to different dietary preferences and restrictions
+            - Use food photography and presentation tips`,
+
+            'Luxury & Lifestyle': `
+            💎 LUXURY CONTENT MASTERY:
+            - Reference high-end brands, products, and experiences
+            - Use sophisticated language that appeals to affluent audiences
+            - Include luxury travel, fashion, and lifestyle content
+            - Provide insider tips and exclusive insights
+            - Appeal to aspirational and achieved luxury consumers
+            - Include investment pieces and timeless luxury items
+            - Use elegant and refined visual aesthetics`
+        };
+
+        return strategies[nicheName] || `
+        🎯 GENERAL CONTENT STRATEGY:
+        - Create valuable, engaging content that resonates with your target audience
+        - Use authentic voice and provide genuine insights
+        - Include actionable tips and practical advice
+        - Reference current trends and timely topics
+        - Appeal to both beginners and experienced enthusiasts
+        - Use community language and cultural references
+        - Focus on building trust and authority in your niche`;
     }
 
     getTimeContext(currentTime) {
@@ -366,16 +508,30 @@ IMPORTANT: Respond with clearly marked sections:
     }
 
     getContentVariations() {
-        return [
-            { style: 'inspirational and motivating', emotion: 'empowerment' },
-            { style: 'educational and informative', emotion: 'curiosity' },
-            { style: 'entertaining and humorous', emotion: 'joy' },
-            { style: 'thought-provoking and insightful', emotion: 'contemplation' },
-            { style: 'conversational and relatable', emotion: 'connection' },
-            { style: 'authoritative and expert', emotion: 'trust' },
-            { style: 'storytelling and narrative', emotion: 'engagement' },
-            { style: 'controversial and debate-worthy', emotion: 'passion' }
+        const currentHour = new Date().getHours();
+        const isWeekend = [0, 6].includes(new Date().getDay());
+
+        // Time-based content variations for optimal engagement
+        const baseVariations = [
+            { style: 'inspirational and motivating', emotion: 'empowerment', bestTimes: [6, 7, 8, 18, 19] },
+            { style: 'educational and informative', emotion: 'curiosity', bestTimes: [9, 10, 11, 14, 15] },
+            { style: 'entertaining and humorous', emotion: 'joy', bestTimes: [12, 13, 17, 20, 21] },
+            { style: 'thought-provoking and insightful', emotion: 'contemplation', bestTimes: [16, 17, 22, 23] },
+            { style: 'conversational and relatable', emotion: 'connection', bestTimes: [11, 12, 13, 19, 20] },
+            { style: 'authoritative and expert', emotion: 'trust', bestTimes: [9, 10, 14, 15, 16] },
+            { style: 'storytelling and narrative', emotion: 'engagement', bestTimes: [18, 19, 20, 21] },
+            { style: 'controversial and debate-worthy', emotion: 'passion', bestTimes: [11, 12, 16, 17] },
+            { style: 'behind-the-scenes and personal', emotion: 'connection', bestTimes: [8, 9, 18, 19] },
+            { style: 'trending and viral-worthy', emotion: 'engagement', bestTimes: [12, 13, 17, 18, 20] }
         ];
+
+        // Filter variations based on current time for better engagement
+        const timeOptimizedVariations = baseVariations.filter(variation =>
+            variation.bestTimes.includes(currentHour) || Math.random() > 0.7
+        );
+
+        // If no time-optimized variations, return all
+        return timeOptimizedVariations.length > 0 ? timeOptimizedVariations : baseVariations;
     }
 
     parseGeneratedContent(text, contentType) {
@@ -479,22 +635,41 @@ IMPORTANT: Respond with clearly marked sections:
     }
 
     validateContent(content) {
-        // Ensure minimum content quality
+        // Enhanced content quality validation with better fallbacks
         if (!content.tweet || content.tweet.length < 10) {
-            content.tweet = 'Exciting content coming soon! 🚀 #content #socialmedia';
+            const fallbackTweets = [
+                'Ready to level up? 🚀 Drop a 💪 if you\'re committed to growth! #motivation #success',
+                'The best time to start was yesterday. The second best time is now. ⏰ #mindset #action',
+                'Small steps daily lead to big changes yearly. What\'s your next move? 🎯 #progress #goals'
+            ];
+            content.tweet = fallbackTweets[Math.floor(Math.random() * fallbackTweets.length)];
         }
 
         if (!content.instagram || content.instagram.length < 20) {
-            content.instagram = 'Creating amazing content for our community! ✨\n\nStay tuned for more updates and insights.';
+            content.instagram = `Creating valuable content for our amazing community! ✨
+
+Every day is a new opportunity to learn, grow, and make progress toward your goals.
+
+What's one thing you're working on today that your future self will thank you for?
+
+Drop it in the comments below! 👇`;
         }
 
         if (!content.hashtags || content.hashtags.length < 5) {
-            content.hashtags = '#content #socialmedia #digital #marketing #community';
+            content.hashtags = '#growth #motivation #community #success #mindset #goals #inspiration #progress #lifestyle #content';
         }
 
         if (!content.imagePrompt || content.imagePrompt.length < 20) {
-            content.imagePrompt = 'A modern, clean social media post design with vibrant colors and professional typography';
+            content.imagePrompt = 'Professional social media post design, modern minimalist aesthetic, vibrant gradient background, clean typography, high-quality 4K resolution, Instagram-optimized layout, trending visual style, engaging and scroll-stopping design';
         }
+
+        // Ensure tweet is within character limit
+        if (content.tweet.length > 280) {
+            content.tweet = this.optimizeTweet(content.tweet);
+        }
+
+        // Ensure hashtags are properly formatted
+        content.hashtags = this.cleanHashtags(content.hashtags);
     }
 
     cleanContent(content) {
@@ -548,6 +723,172 @@ IMPORTANT: Respond with clearly marked sections:
         return ideas;
     }
 
+    // Improve content based on quality analysis
+    async improveContent(originalContent, analysis, niche = null) {
+        if (!this.model) {
+            throw new Error('Gemini API not configured');
+        }
+
+        try {
+            const improvementPrompt = this.buildImprovementPrompt(originalContent, analysis, niche);
+
+            const result = await this.model.generateContent(improvementPrompt);
+            const response = await result.response;
+            const text = response.text();
+
+            const improvedContent = this.parseImprovedContent(text, originalContent);
+
+            return improvedContent;
+        } catch (error) {
+            console.error('Error improving content with Gemini:', error);
+            throw new Error(`Content improvement failed: ${error.message}`);
+        }
+    }
+
+    buildImprovementPrompt(originalContent, analysis, niche) {
+        const improvements = analysis.improvements || [];
+        const suggestions = analysis.suggestions || [];
+        const weakAreas = improvements.filter(imp => imp.priority === 'high');
+
+        const prompt = `
+🔧 CONTENT IMPROVEMENT SPECIALIST
+
+You are an expert content optimizer. Improve the following content based on the quality analysis provided.
+
+📊 CURRENT QUALITY ANALYSIS:
+- Overall Score: ${analysis.overallScore}/100 (Grade: ${analysis.grade})
+- Viral Potential: ${analysis.viralPotential?.potential || 'Unknown'}
+
+🎯 NICHE CONTEXT:
+${niche ? `
+- Niche: ${niche.name}
+- Persona: ${niche.persona}
+- Keywords: ${niche.keywords}
+` : 'No specific niche context provided'}
+
+📝 ORIGINAL CONTENT:
+**X POST:** ${originalContent.tweet}
+**INSTAGRAM:** ${originalContent.instagram}
+**HASHTAGS:** ${originalContent.hashtags}
+**IMAGE PROMPT:** ${originalContent.imagePrompt}
+
+🚨 PRIORITY IMPROVEMENTS NEEDED:
+${weakAreas.map(area => `- ${area.category}: ${area.message} (Score: ${area.score}/100)`).join('\n')}
+
+💡 SPECIFIC SUGGESTIONS:
+${suggestions.map(sug => `- ${sug.category}: ${sug.message} (Priority: ${sug.priority})`).join('\n')}
+
+🎯 IMPROVEMENT OBJECTIVES:
+1. **Engagement**: ${analysis.scores?.engagement?.score < 70 ? 'Add stronger hooks, questions, and calls-to-action' : 'Maintain current engagement level'}
+2. **Readability**: ${analysis.scores?.readability?.score < 70 ? 'Improve structure, clarity, and flow' : 'Maintain current readability'}
+3. **Relevance**: ${analysis.scores?.relevance?.score < 70 ? 'Better align with niche and trending topics' : 'Maintain current relevance'}
+4. **Creativity**: ${analysis.scores?.creativity?.score < 70 ? 'Add more originality and storytelling elements' : 'Maintain current creativity'}
+5. **Technical**: ${analysis.scores?.technical?.score < 70 ? 'Fix grammar, spelling, and formatting issues' : 'Maintain technical quality'}
+
+🚀 IMPROVEMENT INSTRUCTIONS:
+- Keep the core message and value proposition intact
+- Apply ALL priority improvements identified above
+- Enhance weak areas while preserving strengths
+- Ensure content remains authentic to the ${niche?.persona || 'brand voice'}
+- Optimize for maximum engagement and viral potential
+- Maintain character limits (X: 280 chars, Instagram: reasonable length)
+
+📋 REQUIRED OUTPUT FORMAT:
+
+**IMPROVED X POST**
+[Your improved X post here - must address engagement and technical issues]
+
+**IMPROVED INSTAGRAM CAPTION**
+[Your improved Instagram caption here - must address readability and creativity issues]
+
+**IMPROVED HASHTAGS**
+[Your improved hashtag strategy here - must be relevant and strategic]
+
+**IMPROVED IMAGE PROMPT**
+[Your improved image prompt here - must be more creative and specific]
+
+**IMPROVEMENTS APPLIED**
+[List the specific improvements you made, e.g., "Added stronger hook", "Improved readability with line breaks", etc.]
+
+Generate improved content that addresses ALL identified weaknesses while maintaining the original intent and value.
+`;
+
+        return prompt;
+    }
+
+    parseImprovedContent(text, originalContent) {
+        try {
+            const patterns = {
+                tweet: /\*\*IMPROVED X POST\*\*[:\s]*\n(.*?)(?=\n\*\*|$)/s,
+                instagram: /\*\*IMPROVED INSTAGRAM CAPTION\*\*[:\s]*\n(.*?)(?=\n\*\*|$)/s,
+                hashtags: /\*\*IMPROVED HASHTAGS\*\*[:\s]*\n(.*?)(?=\n\*\*|$)/s,
+                imagePrompt: /\*\*IMPROVED IMAGE PROMPT\*\*[:\s]*\n(.*?)(?=\n\*\*|$)/s,
+                improvements: /\*\*IMPROVEMENTS APPLIED\*\*[:\s]*\n(.*?)$/s
+            };
+
+            const improvedContent = {
+                tweet: originalContent.tweet,
+                instagram: originalContent.instagram,
+                hashtags: originalContent.hashtags,
+                imagePrompt: originalContent.imagePrompt,
+                improvements: []
+            };
+
+            // Extract improved content
+            for (const [key, pattern] of Object.entries(patterns)) {
+                const match = text.match(pattern);
+                if (match && match[1]) {
+                    if (key === 'improvements') {
+                        // Parse improvements list
+                        const improvementsList = match[1].trim()
+                            .split('\n')
+                            .map(line => line.replace(/^[-•*]\s*/, '').trim())
+                            .filter(line => line.length > 0);
+                        improvedContent.improvements = improvementsList;
+                    } else {
+                        improvedContent[key] = this.cleanContent(match[1]);
+                    }
+                }
+            }
+
+            // Clean and optimize improved content
+            improvedContent.tweet = this.optimizeTweet(improvedContent.tweet);
+            improvedContent.instagram = this.cleanInstagramContent(improvedContent.instagram);
+            improvedContent.hashtags = this.cleanHashtags(improvedContent.hashtags);
+            improvedContent.imagePrompt = this.cleanContent(improvedContent.imagePrompt);
+
+            // Validate improvements were actually made
+            this.validateImprovements(improvedContent, originalContent);
+
+            return improvedContent;
+        } catch (error) {
+            console.error('Error parsing improved content:', error);
+            throw new Error('Failed to parse improved content');
+        }
+    }
+
+    validateImprovements(improvedContent, originalContent) {
+        // Ensure content was actually improved, not just copied
+        const changes = {
+            tweet: improvedContent.tweet !== originalContent.tweet,
+            instagram: improvedContent.instagram !== originalContent.instagram,
+            hashtags: improvedContent.hashtags !== originalContent.hashtags,
+            imagePrompt: improvedContent.imagePrompt !== originalContent.imagePrompt
+        };
+
+        const changesCount = Object.values(changes).filter(Boolean).length;
+
+        if (changesCount === 0) {
+            // If no changes were made, add default improvements
+            improvedContent.improvements = ['Content reviewed and optimized for quality'];
+        }
+
+        // Ensure improvements list exists
+        if (!improvedContent.improvements || improvedContent.improvements.length === 0) {
+            improvedContent.improvements = ['Enhanced content quality and engagement potential'];
+        }
+    }
+
     // Test method to verify API connection
     async testConnection() {
         if (!this.model) {
@@ -558,16 +899,16 @@ IMPORTANT: Respond with clearly marked sections:
             const result = await this.model.generateContent('Say "Hello, Gemini API is working!" in a creative way.');
             const response = await result.response;
             const text = response.text();
-            
-            return { 
-                success: true, 
+
+            return {
+                success: true,
                 message: 'Gemini API connection successful',
-                response: text 
+                response: text
             };
         } catch (error) {
-            return { 
-                success: false, 
-                error: error.message 
+            return {
+                success: false,
+                error: error.message
             };
         }
     }

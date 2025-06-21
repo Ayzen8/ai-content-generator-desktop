@@ -27,13 +27,34 @@ const GrowthBot: React.FC = () => {
         accessToken: '',
         accessSecret: ''
     });
+    const [hasStoredCredentials, setHasStoredCredentials] = useState(false);
+    const [credentialsLoaded, setCredentialsLoaded] = useState(false);
     const [targetNiches, setTargetNiches] = useState<any[]>([]);
     const [availableNiches, setAvailableNiches] = useState<any[]>([]);
 
     useEffect(() => {
         loadStats();
         loadNiches();
+        loadStoredCredentials();
     }, []);
+
+    const loadStoredCredentials = async () => {
+        try {
+            const response = await ApiService.get('/api/credentials/x/load');
+            if (response.hasCredentials) {
+                setHasStoredCredentials(true);
+                setCredentials(prev => ({
+                    ...prev,
+                    apiKey: response.apiKey || '',
+                    apiSecret: response.apiSecret || ''
+                }));
+            }
+            setCredentialsLoaded(true);
+        } catch (error) {
+            console.error('Error loading stored credentials:', error);
+            setCredentialsLoaded(true);
+        }
+    };
 
     const loadStats = async () => {
         try {
@@ -57,10 +78,15 @@ const GrowthBot: React.FC = () => {
     const initializeBot = async () => {
         setLoading(true);
         setError(null);
-        
+
         try {
+            // Save credentials first
+            await ApiService.post('/api/credentials/x/save', credentials);
+
+            // Then initialize the bot
             await ApiService.post('/api/growth-bot/initialize', credentials);
             setIsInitialized(true);
+            setHasStoredCredentials(true);
             await loadStats();
         } catch (error: any) {
             setError(error.message || 'Failed to initialize Growth Bot');
@@ -107,13 +133,42 @@ const GrowthBot: React.FC = () => {
         });
     };
 
+    const clearStoredCredentials = async () => {
+        try {
+            await ApiService.delete('/api/credentials/x/clear');
+            setHasStoredCredentials(false);
+            setCredentials({
+                apiKey: '',
+                apiSecret: '',
+                accessToken: '',
+                accessSecret: ''
+            });
+        } catch (error) {
+            console.error('Error clearing credentials:', error);
+        }
+    };
+
     if (!isInitialized) {
         return (
             <div className="growth-bot-setup">
                 <div className="card">
                     <h2>🤖 Growth Bot Setup</h2>
-                    <p>Initialize the Growth Bot with your Twitter API credentials to start automated engagement.</p>
-                    
+                    <p>Initialize the Growth Bot with your X API credentials to start automated engagement.</p>
+
+                    {hasStoredCredentials && (
+                        <div className="stored-credentials-info">
+                            <span className="success-icon">✅</span>
+                            <span>Stored credentials found! You can use saved credentials or enter new ones.</span>
+                            <button
+                                onClick={clearStoredCredentials}
+                                className="btn btn-sm btn-secondary"
+                                style={{ marginLeft: '10px' }}
+                            >
+                                Clear Saved
+                            </button>
+                        </div>
+                    )}
+
                     {error && (
                         <div className="error-message">
                             <span className="error-icon">⚠️</span>
@@ -123,22 +178,22 @@ const GrowthBot: React.FC = () => {
                     
                     <div className="credentials-form">
                         <div className="form-group">
-                            <label>Twitter API Key</label>
+                            <label>X API Key</label>
                             <input
                                 type="text"
                                 value={credentials.apiKey}
                                 onChange={(e) => setCredentials(prev => ({ ...prev, apiKey: e.target.value }))}
-                                placeholder="Your Twitter API Key"
+                                placeholder="Your X API Key"
                             />
                         </div>
-                        
+
                         <div className="form-group">
-                            <label>Twitter API Secret</label>
+                            <label>X API Secret</label>
                             <input
                                 type="password"
                                 value={credentials.apiSecret}
                                 onChange={(e) => setCredentials(prev => ({ ...prev, apiSecret: e.target.value }))}
-                                placeholder="Your Twitter API Secret"
+                                placeholder="Your X API Secret"
                             />
                         </div>
                         
@@ -172,7 +227,7 @@ const GrowthBot: React.FC = () => {
                     </div>
                     
                     <div className="setup-help">
-                        <h3>📋 How to get Twitter API credentials:</h3>
+                        <h3>📋 How to get X API credentials:</h3>
                         <ol>
                             <li>Go to <a href="https://developer.twitter.com" target="_blank">developer.twitter.com</a></li>
                             <li>Create a new app or use existing one</li>
@@ -285,11 +340,14 @@ const GrowthBot: React.FC = () => {
                 <div className="card">
                     <h3>ℹ️ How Growth Bot Works</h3>
                     <ul>
-                        <li><strong>Smart Targeting:</strong> Finds users in your selected niches</li>
-                        <li><strong>AI Comments:</strong> Generates helpful, engaging comments</li>
-                        <li><strong>Safe Limits:</strong> Respects Twitter rate limits and best practices</li>
-                        <li><strong>Quality Focus:</strong> Only engages with relevant, quality content</li>
-                        <li><strong>Analytics:</strong> Tracks performance and growth metrics</li>
+                        <li><strong>Smart Targeting:</strong> Uses hashtags, questions, and problem-solving searches</li>
+                        <li><strong>Niche-Specific AI:</strong> Comments using your selected niche personas</li>
+                        <li><strong>Question Detection:</strong> Prioritizes engaging with questions for better visibility</li>
+                        <li><strong>Quality Filtering:</strong> Avoids viral tweets, targets optimal engagement windows</li>
+                        <li><strong>Human-Like Posts:</strong> Occasionally posts organic content (1-3 times/day) to appear authentic</li>
+                        <li><strong>Optimal Timing:</strong> Engages during peak hours (9AM-11AM, 1PM-3PM, 7PM-9PM)</li>
+                        <li><strong>Safe Limits:</strong> Respects X rate limits (15 follows, 30 likes, 10 comments/hour)</li>
+                        <li><strong>Fresh Content Focus:</strong> Engages with recent tweets for maximum impact</li>
                     </ul>
                 </div>
             </div>

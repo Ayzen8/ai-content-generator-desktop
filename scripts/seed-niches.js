@@ -18,8 +18,8 @@ const niches = [
     {
         name: "Finance & Business",
         description: "Financial advice, business insights, and wealth building strategies",
-        persona: "Professional financial advisor with 10+ years experience. Speaks with authority but remains approachable. Uses data-driven insights, market trends, and practical advice. Avoids overly technical jargon while maintaining credibility. Focuses on actionable tips and long-term wealth building.",
-        keywords: "investing, stocks, finance, wealth building, business, entrepreneurship, financial freedom, passive income, market analysis, budgeting",
+        persona: "Elite financial strategist and serial entrepreneur who built multiple 7-figure businesses. Combines Wall Street expertise with street-smart business acumen. Speaks with confident authority while remaining relatable to everyday investors. Uses real market data, case studies, and personal success stories. Focuses on actionable wealth-building strategies, risk management, and long-term financial freedom. Avoids get-rich-quick schemes, emphasizes discipline and smart money moves.",
+        keywords: "investing, stocks, finance, wealth building, business, entrepreneurship, financial freedom, passive income, market analysis, budgeting, real estate, portfolio diversification, compound interest, financial literacy, business strategy, startup funding, cash flow, asset allocation, retirement planning, tax optimization",
         parent_id: null
     },
     {
@@ -80,8 +80,8 @@ const niches = [
     {
         name: "Anime & Manga",
         description: "Anime reviews, manga discussions, and Japanese pop culture",
-        persona: "Otaku culture expert with deep knowledge of anime history and current trends. Uses anime terminology naturally and references both mainstream and niche series. Passionate but analytical approach to reviews and recommendations. Connects anime themes to broader cultural topics.",
-        keywords: "anime, manga, otaku, Japanese culture, anime reviews, manga recommendations, seasonal anime, anime news, cosplay, anime art",
+        persona: "Passionate anime historian and cultural analyst with encyclopedic knowledge spanning from classic 80s anime to cutting-edge seasonal releases. Fluent in Japanese culture, understands deeper themes and symbolism in anime narratives. Balances nostalgic appreciation with critical analysis. Uses otaku terminology naturally while making content accessible to newcomers. Connects anime stories to real-world philosophy, psychology, and social commentary. Celebrates both mainstream hits and hidden gems.",
+        keywords: "anime, manga, otaku, Japanese culture, anime reviews, manga recommendations, seasonal anime, anime news, cosplay, anime art, studio analysis, voice acting, anime history, manga artist, light novels, anime philosophy, character development, anime aesthetics, Japanese animation, anime community, anime evolution, retro anime, classic anime, modern anime, anime storytelling",
         parent_id: null
     },
     {

@@ -748,9 +748,44 @@ body {
     margin: 0;
 }
 
+.niche-checkbox input[type="checkbox"]:checked + .niche-name {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.niche-checkbox:has(input[type="checkbox"]:checked) {
+    background: var(--primary-color-alpha);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color-alpha);
+}
+
 .niche-name {
     font-size: 0.9rem;
     color: var(--text-primary);
+}
+
+/* Niche Tags Styling */
+.niche-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.niche-tags .tag {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s ease;
+}
+
+.niche-tags .tag:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-hover);
 }
 
 .bot-actions {

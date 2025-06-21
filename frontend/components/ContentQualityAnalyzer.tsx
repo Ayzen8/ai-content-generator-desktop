@@ -66,6 +66,9 @@ const ContentQualityAnalyzer: React.FC<ContentQualityAnalyzerProps> = ({
   const [analysis, setAnalysis] = useState<QualityAnalysis | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [improvedContent, setImprovedContent] = useState<any>(null);
+  const [improving, setImproving] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
 
   const analyzeContent = async () => {
     if (!content.tweet && !content.instagram) {
@@ -94,6 +97,44 @@ const ContentQualityAnalyzer: React.FC<ContentQualityAnalyzerProps> = ({
     } finally {
       setAnalyzing(false);
     }
+  };
+
+  const improveContent = async () => {
+    if (!analysis) {
+      alert('Please analyze content first');
+      return;
+    }
+
+    setImproving(true);
+    try {
+      const response = await ApiService.post('/api/improve-content', {
+        content,
+        analysis,
+        niche_id: nicheId
+      });
+
+      if (response.success) {
+        setImprovedContent(response.improvedContent);
+        setShowComparison(true);
+        SoundService.playSuccess();
+      } else {
+        throw new Error('Content improvement failed');
+      }
+    } catch (error) {
+      console.error('Error improving content:', error);
+      SoundService.playError();
+      alert('Failed to improve content');
+    } finally {
+      setImproving(false);
+    }
+  };
+
+  const useImprovedContent = () => {
+    setContent(improvedContent);
+    setImprovedContent(null);
+    setShowComparison(false);
+    setAnalysis(null);
+    alert('Improved content applied! You can now analyze it again.');
   };
 
   const getScoreColor = (score: number) => {
@@ -278,7 +319,16 @@ const ContentQualityAnalyzer: React.FC<ContentQualityAnalyzerProps> = ({
           {/* Improvements */}
           {analysis.improvements.length > 0 && (
             <div className="improvements-section">
-              <h4>🎯 Areas for Improvement</h4>
+              <div className="improvements-header">
+                <h4>🎯 Areas for Improvement</h4>
+                <button
+                  className="improve-content-btn"
+                  onClick={improveContent}
+                  disabled={improving}
+                >
+                  {improving ? '⏳ Improving...' : '✨ Auto-Improve Content'}
+                </button>
+              </div>
               <div className="improvements-list">
                 {analysis.improvements.map((improvement, index) => (
                   <div key={index} className={`improvement-item priority-${improvement.priority}`}>
@@ -367,6 +417,97 @@ const ContentQualityAnalyzer: React.FC<ContentQualityAnalyzerProps> = ({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Content Comparison View */}
+      {showComparison && improvedContent && (
+        <div className="content-comparison">
+          <div className="comparison-header">
+            <h3>📊 Content Comparison</h3>
+            <p>Compare your original content with AI-improved version</p>
+          </div>
+
+          <div className="comparison-grid">
+            {/* Original Content */}
+            <div className="content-column original">
+              <h4>📝 Original Content</h4>
+              <div className="content-preview">
+                <div className="content-item">
+                  <label>X Post:</label>
+                  <div className="content-text">{content.tweet}</div>
+                </div>
+                <div className="content-item">
+                  <label>Instagram:</label>
+                  <div className="content-text">{content.instagram}</div>
+                </div>
+                <div className="content-item">
+                  <label>Hashtags:</label>
+                  <div className="content-text">{content.hashtags}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Improved Content */}
+            <div className="content-column improved">
+              <h4>✨ Improved Content</h4>
+              <div className="content-preview">
+                <div className="content-item">
+                  <label>X Post:</label>
+                  <div className="content-text improved-text">{improvedContent.tweet}</div>
+                </div>
+                <div className="content-item">
+                  <label>Instagram:</label>
+                  <div className="content-text improved-text">{improvedContent.instagram}</div>
+                </div>
+                <div className="content-item">
+                  <label>Hashtags:</label>
+                  <div className="content-text improved-text">{improvedContent.hashtags}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Improvement Summary */}
+          {improvedContent.improvements && (
+            <div className="improvement-summary">
+              <h4>🔧 What Was Improved</h4>
+              <div className="improvements-applied">
+                {improvedContent.improvements.map((improvement: string, index: number) => (
+                  <div key={index} className="improvement-applied">
+                    ✅ {improvement}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="comparison-actions">
+            <button
+              className="use-improved-btn"
+              onClick={useImprovedContent}
+            >
+              ✨ Use Improved Content
+            </button>
+            <button
+              className="keep-original-btn"
+              onClick={() => setShowComparison(false)}
+            >
+              📝 Keep Original
+            </button>
+            <button
+              className="analyze-improved-btn"
+              onClick={() => {
+                setContent(improvedContent);
+                setShowComparison(false);
+                setImprovedContent(null);
+                setTimeout(() => analyzeContent(), 100);
+              }}
+            >
+              🔍 Analyze Improved Version
+            </button>
+          </div>
         </div>
       )}
     </div>
