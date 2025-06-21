@@ -9,6 +9,7 @@ import Analytics from './Analytics';
 import AdvancedAnalyticsDashboard from './AdvancedAnalyticsDashboard';
 import ContentTemplates from './ContentTemplates';
 import HashtagResearch from './HashtagResearch';
+import SystemDashboard from './SystemDashboard';
 import Settings from './Settings';
 import GrowthBot from './GrowthBot';
 import { ApiService } from '../services/api';
@@ -45,7 +46,7 @@ const setupSSE = (onMessage: (data: any) => void) => {
 const Dashboard: React.FC = () => {
     const [serviceStatus, setServiceStatus] = useState<'running' | 'stopped'>('stopped');
     const [notifications, setNotifications] = useState<string[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'templates' | 'hashtags' | 'analytics' | 'advanced-analytics' | 'niches' | 'growth-bot' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'templates' | 'hashtags' | 'analytics' | 'advanced-analytics' | 'niches' | 'system' | 'growth-bot' | 'settings'>('overview');
     const [stats, setStats] = useState<DashboardStats>({
         totalContent: 0,
         pendingContent: 0,
@@ -177,6 +178,13 @@ const Dashboard: React.FC = () => {
                     Growth Bot
                 </button>
                 <button
+                    className={`tab-btn ${activeTab === 'system' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('system')}
+                >
+                    <span className="tab-icon">🔧</span>
+                    System
+                </button>
+                <button
                     className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
                     onClick={() => setActiveTab('settings')}
                 >
@@ -283,6 +291,10 @@ const Dashboard: React.FC = () => {
                         <NicheForm onNicheCreated={handleNicheCreated} />
                         <NicheList key={refreshKey} />
                     </div>
+                )}
+
+                {activeTab === 'system' && (
+                    <SystemDashboard />
                 )}
 
                 {activeTab === 'growth-bot' && (

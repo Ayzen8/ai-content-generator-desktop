@@ -15,6 +15,9 @@ const advancedAnalyticsService = require('./services/advanced-analytics-service'
 const contentTemplateService = require('./services/content-template-service');
 const hashtagResearchService = require('./services/hashtag-research-service');
 const enhancedContentQualityService = require('./services/enhanced-content-quality-service');
+const enhancedTwitterService = require('./services/enhanced-twitter-service');
+const errorHandlingService = require('./services/error-handling-service');
+const databaseOptimizationService = require('./services/database-optimization-service');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -2747,6 +2750,223 @@ app.post('/api/content/quality-score', async (req, res) => {
     } catch (error) {
         console.error('Error getting quality score:', error);
         res.status(500).json({ error: 'Failed to get quality score' });
+    }
+});
+
+// Enhanced Twitter API Endpoints
+app.post('/api/twitter/initialize', async (req, res) => {
+    try {
+        const credentials = req.body;
+        const result = await enhancedTwitterService.initialize(credentials);
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/twitter/initialize',
+            method: 'POST',
+            userAction: 'twitter_setup'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/twitter/post', async (req, res) => {
+    try {
+        const { content, nicheId } = req.body;
+        const result = await enhancedTwitterService.postTweet(content, { nicheId });
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/twitter/post',
+            method: 'POST',
+            userAction: 'post_tweet',
+            content: req.body.content?.substring(0, 100)
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/twitter/analytics', async (req, res) => {
+    try {
+        const analytics = await enhancedTwitterService.getAccountAnalytics();
+        res.json(analytics);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/twitter/analytics',
+            method: 'GET',
+            userAction: 'get_twitter_analytics'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/twitter/history', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const history = await enhancedTwitterService.getPostingHistory(limit);
+        res.json(history);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/twitter/history',
+            method: 'GET',
+            userAction: 'get_posting_history'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/twitter/status', async (req, res) => {
+    try {
+        const status = await enhancedTwitterService.checkConnection();
+        res.json(status);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/twitter/status',
+            method: 'GET',
+            userAction: 'check_twitter_status'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/twitter/rate-limits', async (req, res) => {
+    try {
+        const rateLimits = enhancedTwitterService.getRateLimitStatus();
+        res.json(rateLimits);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/twitter/rate-limits',
+            method: 'GET',
+            userAction: 'get_rate_limits'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Error Handling API Endpoints
+app.get('/api/system/errors', async (req, res) => {
+    try {
+        const timeframe = req.query.timeframe || '24h';
+        const errors = await errorHandlingService.getErrorStatistics(timeframe);
+        res.json(errors);
+    } catch (error) {
+        console.error('Error getting error statistics:', error);
+        res.status(500).json({ error: 'Failed to get error statistics' });
+    }
+});
+
+app.get('/api/system/errors/recent', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const errors = await errorHandlingService.getRecentErrors(limit);
+        res.json(errors);
+    } catch (error) {
+        console.error('Error getting recent errors:', error);
+        res.status(500).json({ error: 'Failed to get recent errors' });
+    }
+});
+
+app.get('/api/system/errors/patterns', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 20;
+        const patterns = await errorHandlingService.getErrorPatterns(limit);
+        res.json(patterns);
+    } catch (error) {
+        console.error('Error getting error patterns:', error);
+        res.status(500).json({ error: 'Failed to get error patterns' });
+    }
+});
+
+app.post('/api/system/errors/:errorId/resolve', async (req, res) => {
+    try {
+        const { errorId } = req.params;
+        const { solution } = req.body;
+        const result = await errorHandlingService.resolveError(errorId, solution);
+        res.json({ success: true, result });
+    } catch (error) {
+        console.error('Error resolving error:', error);
+        res.status(500).json({ error: 'Failed to resolve error' });
+    }
+});
+
+app.get('/api/system/health', async (req, res) => {
+    try {
+        const health = await errorHandlingService.performHealthCheck();
+        res.json(health);
+    } catch (error) {
+        console.error('Error performing health check:', error);
+        res.status(500).json({ error: 'Failed to perform health check' });
+    }
+});
+
+// Database Optimization API Endpoints
+app.get('/api/database/stats', async (req, res) => {
+    try {
+        const stats = await databaseOptimizationService.getDatabaseStatistics();
+        res.json(stats);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/database/stats',
+            method: 'GET',
+            userAction: 'get_database_stats'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/database/vacuum', async (req, res) => {
+    try {
+        const result = await databaseOptimizationService.vacuum();
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/database/vacuum',
+            method: 'POST',
+            userAction: 'database_vacuum'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/database/backup', async (req, res) => {
+    try {
+        const result = await databaseOptimizationService.createBackup();
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/database/backup',
+            method: 'POST',
+            userAction: 'database_backup'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/database/optimize', async (req, res) => {
+    try {
+        const result = await databaseOptimizationService.performFullOptimization();
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/database/optimize',
+            method: 'POST',
+            userAction: 'database_optimize'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/database/cleanup', async (req, res) => {
+    try {
+        const daysToKeep = parseInt(req.body.daysToKeep) || 90;
+        const result = await databaseOptimizationService.cleanupOldData(daysToKeep);
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/database/cleanup',
+            method: 'POST',
+            userAction: 'database_cleanup'
+        });
+        res.status(500).json({ error: error.message });
     }
 });
 
