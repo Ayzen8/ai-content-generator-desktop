@@ -31,6 +31,7 @@ const ContentVariations: React.FC = () => {
   const [variations, setVariations] = useState<ContentVariation[]>([]);
   const [generating, setGenerating] = useState(false);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const contentStyles = [
     { id: 'inspirational', name: 'Inspirational & Motivating', emotion: 'empowerment', icon: '🚀' },
@@ -57,15 +58,18 @@ const ContentVariations: React.FC = () => {
   };
 
   const handleStyleToggle = (styleId: string) => {
-    setSelectedStyles(prev => 
-      prev.includes(styleId) 
+    setSelectedStyles(prev => {
+      if (!Array.isArray(prev)) return [styleId];
+      return prev.includes(styleId)
         ? prev.filter(id => id !== styleId)
-        : [...prev, styleId]
-    );
+        : [...prev, styleId];
+    });
   };
 
   const selectAllStyles = () => {
-    setSelectedStyles(contentStyles.map(style => style.id));
+    if (Array.isArray(contentStyles)) {
+      setSelectedStyles(contentStyles.map(style => style.id));
+    }
   };
 
   const clearStyles = () => {
@@ -86,7 +90,16 @@ const ContentVariations: React.FC = () => {
     setGenerating(true);
     SoundService.playGenerating();
 
+    // Clear any previous errors
+    setError(null);
+
     // Initialize variations
+    if (!Array.isArray(selectedStyles) || selectedStyles.length === 0) {
+      setError('Please select at least one content style');
+      setGenerating(false);
+      return;
+    }
+
     const newVariations: ContentVariation[] = selectedStyles.map(styleId => {
       const style = contentStyles.find(s => s.id === styleId);
       return {
@@ -133,7 +146,9 @@ const ContentVariations: React.FC = () => {
       const results = await Promise.all(promises);
 
       // Update variations with results
-      setVariations(prev => prev.map((variation, index) => {
+      setVariations(prev => {
+        if (!Array.isArray(prev)) return [];
+        return prev.map((variation, index) => {
         const result = results[index];
         if (result.success) {
           return {
@@ -148,7 +163,8 @@ const ContentVariations: React.FC = () => {
             error: result.error
           };
         }
-      }));
+      });
+      });
 
       SoundService.playSuccess();
     } catch (error) {
@@ -164,9 +180,12 @@ const ContentVariations: React.FC = () => {
     const variation = variations.find(v => v.id === variationId);
     if (!variation || !selectedNiche) return;
 
-    setVariations(prev => prev.map(v => 
-      v.id === variationId ? { ...v, generating: true, error: undefined } : v
-    ));
+    setVariations(prev => {
+      if (!Array.isArray(prev)) return [];
+      return prev.map(v =>
+        v.id === variationId ? { ...v, generating: true, error: undefined } : v
+      );
+    });
 
     try {
       const styleId = variation.style.toLowerCase().split(' ')[0];
@@ -176,20 +195,26 @@ const ContentVariations: React.FC = () => {
         emotion: variation.emotion
       });
 
-      setVariations(prev => prev.map(v => 
-        v.id === variationId 
-          ? { ...v, content: response, generating: false }
-          : v
-      ));
+      setVariations(prev => {
+        if (!Array.isArray(prev)) return [];
+        return prev.map(v =>
+          v.id === variationId
+            ? { ...v, content: response, generating: false }
+            : v
+        );
+      });
 
       SoundService.playSuccess();
     } catch (error) {
       console.error('Error regenerating variation:', error);
-      setVariations(prev => prev.map(v => 
-        v.id === variationId 
-          ? { ...v, generating: false, error: 'Regeneration failed' }
-          : v
-      ));
+      setVariations(prev => {
+        if (!Array.isArray(prev)) return [];
+        return prev.map(v =>
+          v.id === variationId
+            ? { ...v, generating: false, error: 'Regeneration failed' }
+            : v
+        );
+      });
       SoundService.playError();
     }
   };
@@ -235,7 +260,7 @@ const ContentVariations: React.FC = () => {
             disabled={generating}
           >
             <option value="">Choose a niche...</option>
-            {niches
+            {Array.isArray(niches) && niches
               .sort((a, b) => a.name.localeCompare(b.name))
               .map(niche => (
                 <option key={niche.id} value={niche.id}>
@@ -267,7 +292,7 @@ const ContentVariations: React.FC = () => {
           </div>
 
           <div className="styles-grid">
-            {contentStyles.map(style => (
+            {Array.isArray(contentStyles) && contentStyles.map(style => (
               <div
                 key={style.id}
                 className={`style-card ${selectedStyles.includes(style.id) ? 'selected' : ''}`}
@@ -306,7 +331,7 @@ const ContentVariations: React.FC = () => {
         <div className="variations-results">
           <h3>📊 Generated Variations</h3>
           <div className="variations-grid">
-            {variations.map(variation => (
+            {Array.isArray(variations) && variations.map(variation => (
               <div key={variation.id} className="variation-card">
                 <div className="variation-header">
                   <div className="variation-style">
