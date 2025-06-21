@@ -20,16 +20,77 @@ interface PredictiveData {
     recommendations: any[];
 }
 
+interface PredictiveAnalytics {
+    engagement: {
+        predicted_value: number;
+        confidence_score: number;
+        factors: any;
+    };
+    reach: {
+        predicted_value: number;
+        confidence_score: number;
+        factors: any;
+    };
+    viral_potential: {
+        predicted_value: number;
+        confidence_score: number;
+        factors: any;
+    };
+}
+
+interface ContentTrends {
+    hashtag_trends: Array<{
+        hashtag: string;
+        popularity_score: number;
+        growth_rate: number;
+        usage_count: number;
+    }>;
+    timing_trends: Array<{
+        time_slot: string;
+        avg_engagement: number;
+        sample_size: number;
+    }>;
+    format_trends: Array<{
+        format: string;
+        avg_engagement: number;
+        sample_size: number;
+    }>;
+}
+
 const AdvancedAnalyticsDashboard: React.FC = () => {
     const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
     const [predictiveData, setPredictiveData] = useState<PredictiveData | null>(null);
+    const [newPredictiveData, setNewPredictiveData] = useState<PredictiveAnalytics | null>(null);
+    const [trendsData, setTrendsData] = useState<ContentTrends | null>(null);
+    const [selectedNiche, setSelectedNiche] = useState<number | null>(null);
+    const [selectedPlatform, setSelectedPlatform] = useState<string>('twitter');
+    const [niches, setNiches] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [timeframe, setTimeframe] = useState('30d');
     const [activeTab, setActiveTab] = useState('overview');
 
     useEffect(() => {
+        loadNiches();
         loadAnalyticsData();
     }, [timeframe]);
+
+    useEffect(() => {
+        if (selectedNiche) {
+            loadNewPredictiveData();
+        }
+    }, [selectedNiche, selectedPlatform]);
+
+    const loadNiches = async () => {
+        try {
+            const nichesData = await ApiService.get('/api/niches');
+            setNiches(nichesData);
+            if (nichesData.length > 0 && !selectedNiche) {
+                setSelectedNiche(nichesData[0].id);
+            }
+        } catch (error) {
+            console.error('Error loading niches:', error);
+        }
+    };
 
     const loadAnalyticsData = async () => {
         try {
@@ -38,13 +99,29 @@ const AdvancedAnalyticsDashboard: React.FC = () => {
                 ApiService.getAdvancedAnalytics(timeframe),
                 ApiService.getPredictiveAnalytics()
             ]);
-            
+
             setAnalyticsData(analytics);
             setPredictiveData(predictive);
         } catch (error) {
             console.error('Error loading analytics:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const loadNewPredictiveData = async () => {
+        if (!selectedNiche) return;
+
+        try {
+            const [predictiveResponse, trendsResponse] = await Promise.all([
+                ApiService.get(`/api/analytics/predictive/${selectedNiche}/${selectedPlatform}`).catch(() => null),
+                ApiService.get(`/api/analytics/trends?platform=${selectedPlatform}&nicheId=${selectedNiche}`).catch(() => null)
+            ]);
+
+            setNewPredictiveData(predictiveResponse);
+            setTrendsData(trendsResponse);
+        } catch (error) {
+            console.error('Error loading new predictive data:', error);
         }
     };
 
@@ -56,6 +133,25 @@ const AdvancedAnalyticsDashboard: React.FC = () => {
 
     const formatPercentage = (num: number): string => {
         return (num * 100).toFixed(1) + '%';
+    };
+
+    const getConfidenceColor = (confidence: number) => {
+        if (confidence >= 0.8) return '#00ff88';
+        if (confidence >= 0.6) return '#ffaa00';
+        return '#ff4444';
+    };
+
+    const formatPredictionValue = (type: string, value: number) => {
+        switch (type) {
+            case 'engagement':
+                return `${(value * 100).toFixed(2)}%`;
+            case 'reach':
+                return value.toLocaleString();
+            case 'viral_potential':
+                return `${(value * 100).toFixed(1)}%`;
+            default:
+                return value.toString();
+        }
     };
 
     if (loading) {
@@ -109,11 +205,23 @@ const AdvancedAnalyticsDashboard: React.FC = () => {
                 >
                     Growth Analytics
                 </button>
-                <button 
+                <button
                     className={`tab-btn ${activeTab === 'predictions' ? 'active' : ''}`}
                     onClick={() => setActiveTab('predictions')}
                 >
                     Predictions
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'ai-predictions' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('ai-predictions')}
+                >
+                    🔮 AI Predictions
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'trends' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('trends')}
+                >
+                    📈 Trends
                 </button>
             </div>
 
@@ -355,6 +463,224 @@ const AdvancedAnalyticsDashboard: React.FC = () => {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* AI Predictions Tab */}
+            {activeTab === 'ai-predictions' && (
+                <div className="ai-predictions-tab">
+                    {/* Niche and Platform Selection */}
+                    <div className="prediction-controls">
+                        <div className="control-group">
+                            <label>Niche:</label>
+                            <select
+                                value={selectedNiche || ''}
+                                onChange={(e) => setSelectedNiche(parseInt(e.target.value))}
+                            >
+                                {niches.map(niche => (
+                                    <option key={niche.id} value={niche.id}>
+                                        {niche.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="control-group">
+                            <label>Platform:</label>
+                            <select
+                                value={selectedPlatform}
+                                onChange={(e) => setSelectedPlatform(e.target.value)}
+                            >
+                                <option value="twitter">Twitter/X</option>
+                                <option value="instagram">Instagram</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {newPredictiveData ? (
+                        <div className="ai-predictions-grid">
+                            {/* Engagement Prediction */}
+                            <div className="ai-prediction-card">
+                                <div className="prediction-header">
+                                    <h3>💬 Engagement Prediction</h3>
+                                    <div
+                                        className="confidence-badge"
+                                        style={{ backgroundColor: getConfidenceColor(newPredictiveData.engagement.confidence_score) }}
+                                    >
+                                        {Math.round(newPredictiveData.engagement.confidence_score * 100)}% confidence
+                                    </div>
+                                </div>
+                                <div className="prediction-value">
+                                    {formatPredictionValue('engagement', newPredictiveData.engagement.predicted_value)}
+                                </div>
+                                <div className="prediction-factors">
+                                    <div className="factor">
+                                        <span>Historical Avg:</span>
+                                        <span>{formatPredictionValue('engagement', newPredictiveData.engagement.factors.historical_average)}</span>
+                                    </div>
+                                    <div className="factor">
+                                        <span>Trend:</span>
+                                        <span className={newPredictiveData.engagement.factors.trend > 0 ? 'positive' : 'negative'}>
+                                            {newPredictiveData.engagement.factors.trend > 0 ? '↗️' : '↘️'}
+                                            {Math.abs(newPredictiveData.engagement.factors.trend * 100).toFixed(2)}%
+                                        </span>
+                                    </div>
+                                    <div className="factor">
+                                        <span>Data Points:</span>
+                                        <span>{newPredictiveData.engagement.factors.data_points}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Reach Prediction */}
+                            <div className="ai-prediction-card">
+                                <div className="prediction-header">
+                                    <h3>👥 Reach Prediction</h3>
+                                    <div
+                                        className="confidence-badge"
+                                        style={{ backgroundColor: getConfidenceColor(newPredictiveData.reach.confidence_score) }}
+                                    >
+                                        {Math.round(newPredictiveData.reach.confidence_score * 100)}% confidence
+                                    </div>
+                                </div>
+                                <div className="prediction-value">
+                                    {formatPredictionValue('reach', newPredictiveData.reach.predicted_value)}
+                                </div>
+                                <div className="prediction-factors">
+                                    <div className="factor">
+                                        <span>Historical Avg:</span>
+                                        <span>{formatPredictionValue('reach', newPredictiveData.reach.factors.historical_average)}</span>
+                                    </div>
+                                    <div className="factor">
+                                        <span>Trend:</span>
+                                        <span className={newPredictiveData.reach.factors.trend > 0 ? 'positive' : 'negative'}>
+                                            {newPredictiveData.reach.factors.trend > 0 ? '↗️' : '↘️'}
+                                            {Math.abs(newPredictiveData.reach.factors.trend).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="factor">
+                                        <span>Data Points:</span>
+                                        <span>{newPredictiveData.reach.factors.data_points}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Viral Potential */}
+                            <div className="ai-prediction-card">
+                                <div className="prediction-header">
+                                    <h3>🚀 Viral Potential</h3>
+                                    <div
+                                        className="confidence-badge"
+                                        style={{ backgroundColor: getConfidenceColor(newPredictiveData.viral_potential.confidence_score) }}
+                                    >
+                                        {Math.round(newPredictiveData.viral_potential.confidence_score * 100)}% confidence
+                                    </div>
+                                </div>
+                                <div className="prediction-value">
+                                    {formatPredictionValue('viral_potential', newPredictiveData.viral_potential.predicted_value)}
+                                </div>
+                                <div className="prediction-factors">
+                                    <div className="factor">
+                                        <span>Historical Avg:</span>
+                                        <span>{formatPredictionValue('viral_potential', newPredictiveData.viral_potential.factors.historical_average)}</span>
+                                    </div>
+                                    <div className="factor">
+                                        <span>Historical Max:</span>
+                                        <span>{formatPredictionValue('viral_potential', newPredictiveData.viral_potential.factors.historical_max)}</span>
+                                    </div>
+                                    <div className="factor">
+                                        <span>Data Points:</span>
+                                        <span>{newPredictiveData.viral_potential.factors.data_points}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="no-data-message">
+                            <p>📊 Insufficient data for AI predictions</p>
+                            <p>Generate more content to unlock advanced predictive analytics</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Trends Tab */}
+            {activeTab === 'trends' && trendsData && (
+                <div className="trends-tab">
+                    {/* Hashtag Trends */}
+                    <div className="trends-section">
+                        <h3>🏷️ Trending Hashtags</h3>
+                        <div className="hashtag-trends">
+                            {trendsData.hashtag_trends.slice(0, 10).map((trend, index) => (
+                                <div key={index} className="trend-card">
+                                    <div className="trend-hashtag">#{trend.hashtag}</div>
+                                    <div className="trend-metrics">
+                                        <div className="trend-metric">
+                                            <span>Growth:</span>
+                                            <span className={trend.growth_rate > 0 ? 'positive' : 'negative'}>
+                                                {trend.growth_rate > 0 ? '↗️' : '↘️'} {Math.abs(trend.growth_rate).toFixed(1)}%
+                                            </span>
+                                        </div>
+                                        <div className="trend-metric">
+                                            <span>Score:</span>
+                                            <span>{trend.popularity_score.toFixed(1)}</span>
+                                        </div>
+                                        <div className="trend-metric">
+                                            <span>Usage:</span>
+                                            <span>{trend.usage_count}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Timing Trends */}
+                    <div className="trends-section">
+                        <h3>⏰ Optimal Posting Times</h3>
+                        <div className="timing-trends">
+                            {trendsData.timing_trends.map((trend, index) => (
+                                <div key={index} className="timing-card">
+                                    <div className="timing-slot">{trend.time_slot}</div>
+                                    <div className="timing-engagement">
+                                        Avg Engagement: {(trend.avg_engagement * 100).toFixed(2)}%
+                                    </div>
+                                    <div className="timing-sample">
+                                        Sample: {trend.sample_size} posts
+                                    </div>
+                                    <div className="engagement-bar">
+                                        <div
+                                            className="engagement-fill"
+                                            style={{ width: `${trend.avg_engagement * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Format Trends */}
+                    <div className="trends-section">
+                        <h3>📱 Content Format Performance</h3>
+                        <div className="format-trends">
+                            {trendsData.format_trends.map((trend, index) => (
+                                <div key={index} className="format-card">
+                                    <div className="format-name">{trend.format.replace('_', ' ').toUpperCase()}</div>
+                                    <div className="format-engagement">
+                                        Avg Engagement: {(trend.avg_engagement * 100).toFixed(2)}%
+                                    </div>
+                                    <div className="format-sample">
+                                        Sample: {trend.sample_size} posts
+                                    </div>
+                                    <div className="engagement-bar">
+                                        <div
+                                            className="engagement-fill"
+                                            style={{ width: `${trend.avg_engagement * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

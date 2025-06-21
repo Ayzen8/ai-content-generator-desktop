@@ -84,6 +84,54 @@ class AdvancedAnalyticsService {
                 last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (niche_id) REFERENCES niches (id)
             );
+
+            CREATE TABLE IF NOT EXISTS predictive_analytics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prediction_type TEXT NOT NULL, -- 'engagement', 'reach', 'viral_potential'
+                niche_id INTEGER,
+                platform TEXT NOT NULL,
+                predicted_value REAL NOT NULL,
+                confidence_score REAL NOT NULL, -- 0 to 1
+                factors TEXT, -- JSON string with contributing factors
+                actual_value REAL,
+                accuracy_score REAL,
+                prediction_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+                validation_date DATETIME,
+                FOREIGN KEY (niche_id) REFERENCES niches (id)
+            );
+
+            CREATE TABLE IF NOT EXISTS content_trends (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                trend_type TEXT NOT NULL, -- 'hashtag', 'topic', 'format', 'timing'
+                trend_value TEXT NOT NULL,
+                niche_id INTEGER,
+                platform TEXT NOT NULL,
+                popularity_score REAL NOT NULL, -- 0 to 100
+                growth_rate REAL NOT NULL, -- percentage
+                peak_time TEXT,
+                duration_days INTEGER,
+                engagement_multiplier REAL DEFAULT 1.0,
+                first_detected DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+                status TEXT DEFAULT 'active', -- 'active', 'declining', 'expired'
+                FOREIGN KEY (niche_id) REFERENCES niches (id)
+            );
+
+            CREATE TABLE IF NOT EXISTS content_optimization_suggestions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                content_id INTEGER,
+                suggestion_type TEXT NOT NULL, -- 'hashtag', 'timing', 'format', 'length', 'tone'
+                current_value TEXT,
+                suggested_value TEXT,
+                expected_improvement REAL, -- percentage
+                confidence_score REAL, -- 0 to 1
+                reasoning TEXT,
+                priority TEXT DEFAULT 'medium', -- 'high', 'medium', 'low'
+                status TEXT DEFAULT 'pending', -- 'pending', 'applied', 'dismissed'
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                applied_at DATETIME,
+                FOREIGN KEY (content_id) REFERENCES content (id)
+            );
         `;
 
         this.db.exec(createAnalyticsTables, (err) => {
@@ -656,6 +704,381 @@ class AdvancedAnalyticsService {
         }
 
         return recommendations;
+    }
+
+    // Generate predictive analytics
+    async generatePredictiveAnalytics(nicheId, platform) {
+        try {
+            // Get historical performance data
+            const historicalData = await this.getHistoricalPerformanceData(nicheId, platform);
+
+            if (historicalData.length < 5) {
+                return { error: 'Insufficient data for predictions' };
+            }
+
+            // Calculate engagement prediction
+            const engagementPrediction = this.calculateEngagementPrediction(historicalData);
+
+            // Calculate reach prediction
+            const reachPrediction = this.calculateReachPrediction(historicalData);
+
+            // Calculate viral potential
+            const viralPotential = this.calculateViralPotential(historicalData);
+
+            // Save predictions
+            await this.savePrediction('engagement', nicheId, platform, engagementPrediction);
+            await this.savePrediction('reach', nicheId, platform, reachPrediction);
+            await this.savePrediction('viral_potential', nicheId, platform, viralPotential);
+
+            return {
+                engagement: engagementPrediction,
+                reach: reachPrediction,
+                viral_potential: viralPotential
+            };
+        } catch (error) {
+            console.error('Error generating predictive analytics:', error);
+            throw error;
+        }
+    }
+
+    // Get historical performance data
+    async getHistoricalPerformanceData(nicheId, platform) {
+        return new Promise((resolve, reject) => {
+            const query = `
+                SELECT cp.*, c.niche_id
+                FROM content_performance cp
+                JOIN content c ON cp.content_id = c.id
+                WHERE c.niche_id = ? AND cp.platform = ?
+                ORDER BY cp.recorded_at DESC
+                LIMIT 50
+            `;
+
+            this.db.all(query, [nicheId, platform], (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    // Calculate engagement prediction using moving average and trend analysis
+    calculateEngagementPrediction(historicalData) {
+        const engagementRates = historicalData.map(d => d.engagement_rate).filter(r => r > 0);
+
+        if (engagementRates.length === 0) {
+            return { predicted_value: 0, confidence_score: 0 };
+        }
+
+        // Simple moving average
+        const recentRates = engagementRates.slice(0, 10);
+        const average = recentRates.reduce((sum, rate) => sum + rate, 0) / recentRates.length;
+
+        // Calculate trend
+        const trend = this.calculateTrend(recentRates);
+
+        // Adjust prediction based on trend
+        const predicted_value = Math.max(0, average + (trend * 0.1));
+
+        // Confidence based on data consistency
+        const variance = this.calculateVariance(recentRates);
+        const confidence_score = Math.max(0.1, 1 - (variance / average));
+
+        return {
+            predicted_value: Math.round(predicted_value * 10000) / 10000,
+            confidence_score: Math.round(confidence_score * 100) / 100,
+            factors: {
+                historical_average: Math.round(average * 10000) / 10000,
+                trend: Math.round(trend * 10000) / 10000,
+                data_points: recentRates.length
+            }
+        };
+    }
+
+    // Calculate reach prediction
+    calculateReachPrediction(historicalData) {
+        const reachData = historicalData.map(d => d.reach).filter(r => r > 0);
+
+        if (reachData.length === 0) {
+            return { predicted_value: 0, confidence_score: 0 };
+        }
+
+        const recentReach = reachData.slice(0, 10);
+        const average = recentReach.reduce((sum, reach) => sum + reach, 0) / recentReach.length;
+        const trend = this.calculateTrend(recentReach);
+
+        const predicted_value = Math.max(0, average + (trend * 0.15));
+        const variance = this.calculateVariance(recentReach);
+        const confidence_score = Math.max(0.1, 1 - (variance / average));
+
+        return {
+            predicted_value: Math.round(predicted_value),
+            confidence_score: Math.round(confidence_score * 100) / 100,
+            factors: {
+                historical_average: Math.round(average),
+                trend: Math.round(trend),
+                data_points: recentReach.length
+            }
+        };
+    }
+
+    // Calculate viral potential
+    calculateViralPotential(historicalData) {
+        const viralScores = historicalData.map(d => {
+            // Calculate viral score based on shares, comments, and engagement rate
+            const shareRate = d.shares / Math.max(d.views, 1);
+            const commentRate = d.comments / Math.max(d.views, 1);
+            return (shareRate * 0.6) + (commentRate * 0.4) + (d.engagement_rate * 0.2);
+        }).filter(s => s > 0);
+
+        if (viralScores.length === 0) {
+            return { predicted_value: 0, confidence_score: 0 };
+        }
+
+        const average = viralScores.reduce((sum, score) => sum + score, 0) / viralScores.length;
+        const maxViral = Math.max(...viralScores);
+
+        // Viral potential is based on historical max and recent performance
+        const predicted_value = Math.min(1, (average + maxViral) / 2);
+        const confidence_score = viralScores.length >= 10 ? 0.8 : 0.5;
+
+        return {
+            predicted_value: Math.round(predicted_value * 100) / 100,
+            confidence_score: confidence_score,
+            factors: {
+                historical_average: Math.round(average * 100) / 100,
+                historical_max: Math.round(maxViral * 100) / 100,
+                data_points: viralScores.length
+            }
+        };
+    }
+
+    // Calculate trend (simple linear regression slope)
+    calculateTrend(data) {
+        if (data.length < 2) return 0;
+
+        const n = data.length;
+        const sumX = (n * (n - 1)) / 2; // Sum of indices
+        const sumY = data.reduce((sum, val) => sum + val, 0);
+        const sumXY = data.reduce((sum, val, index) => sum + (index * val), 0);
+        const sumXX = (n * (n - 1) * (2 * n - 1)) / 6; // Sum of squared indices
+
+        const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+        return slope || 0;
+    }
+
+    // Calculate variance
+    calculateVariance(data) {
+        if (data.length === 0) return 0;
+
+        const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
+        const variance = data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length;
+        return variance;
+    }
+
+    // Save prediction to database
+    async savePrediction(type, nicheId, platform, prediction) {
+        return new Promise((resolve, reject) => {
+            const query = `
+                INSERT INTO predictive_analytics
+                (prediction_type, niche_id, platform, predicted_value, confidence_score, factors)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+
+            this.db.run(query, [
+                type,
+                nicheId,
+                platform,
+                prediction.predicted_value,
+                prediction.confidence_score,
+                JSON.stringify(prediction.factors)
+            ], function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(this.lastID);
+                }
+            });
+        });
+    }
+
+    // Analyze content trends
+    async analyzeContentTrends(platform = null, nicheId = null) {
+        try {
+            // Analyze hashtag trends
+            const hashtagTrends = await this.analyzeHashtagTrends(platform, nicheId);
+
+            // Analyze posting time trends
+            const timingTrends = await this.analyzeTimingTrends(platform, nicheId);
+
+            // Analyze content format trends
+            const formatTrends = await this.analyzeFormatTrends(platform, nicheId);
+
+            return {
+                hashtag_trends: hashtagTrends,
+                timing_trends: timingTrends,
+                format_trends: formatTrends
+            };
+        } catch (error) {
+            console.error('Error analyzing content trends:', error);
+            throw error;
+        }
+    }
+
+    // Analyze hashtag trends
+    async analyzeHashtagTrends(platform, nicheId) {
+        return new Promise((resolve, reject) => {
+            let query = `
+                SELECT ci.hashtag_performance, cp.engagement_rate, cp.recorded_at
+                FROM content_insights ci
+                JOIN content_performance cp ON ci.content_id = cp.content_id
+                WHERE ci.hashtag_performance IS NOT NULL
+            `;
+            const params = [];
+
+            if (platform) {
+                query += ' AND cp.platform = ?';
+                params.push(platform);
+            }
+
+            if (nicheId) {
+                query += ' AND ci.niche_id = ?';
+                params.push(nicheId);
+            }
+
+            query += ' ORDER BY cp.recorded_at DESC LIMIT 100';
+
+            this.db.all(query, params, (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    const hashtagAnalysis = this.processHashtagData(rows);
+                    resolve(hashtagAnalysis);
+                }
+            });
+        });
+    }
+
+    // Process hashtag data to find trends
+    processHashtagData(rows) {
+        const hashtagPerformance = {};
+
+        rows.forEach(row => {
+            try {
+                const hashtags = JSON.parse(row.hashtag_performance);
+                Object.entries(hashtags).forEach(([hashtag, performance]) => {
+                    if (!hashtagPerformance[hashtag]) {
+                        hashtagPerformance[hashtag] = [];
+                    }
+                    hashtagPerformance[hashtag].push({
+                        performance: performance,
+                        engagement: row.engagement_rate,
+                        date: row.recorded_at
+                    });
+                });
+            } catch (error) {
+                // Skip invalid JSON
+            }
+        });
+
+        // Calculate trending hashtags
+        const trends = Object.entries(hashtagPerformance)
+            .map(([hashtag, data]) => {
+                const avgPerformance = data.reduce((sum, d) => sum + d.performance, 0) / data.length;
+                const recentPerformance = data.slice(0, 5).reduce((sum, d) => sum + d.performance, 0) / Math.min(5, data.length);
+                const growthRate = data.length >= 5 ? ((recentPerformance - avgPerformance) / avgPerformance) * 100 : 0;
+
+                return {
+                    hashtag,
+                    popularity_score: Math.round(avgPerformance * 100) / 100,
+                    growth_rate: Math.round(growthRate * 100) / 100,
+                    usage_count: data.length
+                };
+            })
+            .filter(trend => trend.usage_count >= 3)
+            .sort((a, b) => b.growth_rate - a.growth_rate)
+            .slice(0, 10);
+
+        return trends;
+    }
+
+    // Generate optimization recommendations
+    async generateOptimizationRecommendations() {
+        try {
+            const recommendations = [];
+
+            // Get recent content performance
+            const recentContent = await this.getRecentContentForOptimization();
+
+            for (const content of recentContent) {
+                const suggestions = await this.generateContentOptimizationSuggestions(content);
+                recommendations.push(...suggestions);
+            }
+
+            return recommendations.slice(0, 10); // Return top 10 recommendations
+        } catch (error) {
+            console.error('Error generating optimization recommendations:', error);
+            throw error;
+        }
+    }
+
+    // Get recent content for optimization
+    async getRecentContentForOptimization() {
+        return new Promise((resolve, reject) => {
+            const query = `
+                SELECT c.*, cp.engagement_rate, cp.likes, cp.shares, cp.comments
+                FROM content c
+                JOIN content_performance cp ON c.id = cp.content_id
+                WHERE cp.recorded_at >= datetime('now', '-30 days')
+                ORDER BY cp.recorded_at DESC
+                LIMIT 20
+            `;
+
+            this.db.all(query, (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows);
+                }
+            });
+        });
+    }
+
+    // Generate content optimization suggestions
+    async generateContentOptimizationSuggestions(content) {
+        const suggestions = [];
+
+        // Analyze engagement rate
+        if (content.engagement_rate < 0.02) {
+            suggestions.push({
+                content_id: content.id,
+                suggestion_type: 'engagement',
+                current_value: `${(content.engagement_rate * 100).toFixed(2)}%`,
+                suggested_value: 'Add more engaging hooks and call-to-actions',
+                expected_improvement: 25,
+                confidence_score: 0.7,
+                reasoning: 'Low engagement rate suggests content needs more compelling hooks',
+                priority: 'high'
+            });
+        }
+
+        // Analyze content length
+        const contentLength = content.content?.length || 0;
+        if (contentLength > 280 && content.type === 'twitter') {
+            suggestions.push({
+                content_id: content.id,
+                suggestion_type: 'length',
+                current_value: `${contentLength} characters`,
+                suggested_value: 'Reduce to under 280 characters',
+                expected_improvement: 15,
+                confidence_score: 0.8,
+                reasoning: 'Shorter tweets typically perform better',
+                priority: 'medium'
+            });
+        }
+
+        return suggestions;
     }
 }
 

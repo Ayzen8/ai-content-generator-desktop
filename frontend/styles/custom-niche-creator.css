@@ -1,0 +1,417 @@
+/* Custom Niche Creator Styles */
+.custom-niche-creator {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.creator-header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+.creator-header h2 {
+    color: #00ff88;
+    font-size: 2rem;
+    margin: 0 0 10px 0;
+}
+
+.creator-header p {
+    color: #ccc;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.close-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+}
+
+/* Progress Indicator */
+.creator-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 40px;
+    padding: 0 20px;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active {
+    opacity: 1;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #333;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active .step-number {
+    background: #00ff88;
+    color: #000;
+}
+
+.step-label {
+    color: #ccc;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.progress-step.active .step-label {
+    color: #00ff88;
+}
+
+.progress-line {
+    width: 100px;
+    height: 2px;
+    background: #333;
+    margin: 0 20px;
+}
+
+/* Step Content */
+.step-content {
+    margin-bottom: 20px;
+}
+
+.form-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 30px;
+}
+
+.form-card h3 {
+    color: #00ff88;
+    margin: 0 0 25px 0;
+    font-size: 1.3rem;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    color: #fff;
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    padding: 12px 16px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #00ff88;
+    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+}
+
+.form-group small {
+    display: block;
+    color: #888;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+
+/* AI Enhancing */
+.ai-enhancing {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.enhancing-steps {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.enhancing-step {
+    color: #ccc;
+    font-size: 1rem;
+    padding: 10px 15px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    opacity: 0.7;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* Preview Content */
+.preview-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.preview-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 30px;
+}
+
+.preview-card h3 {
+    color: #00ff88;
+    margin: 0 0 25px 0;
+    font-size: 1.3rem;
+}
+
+.preview-section {
+    margin-bottom: 25px;
+}
+
+.preview-section:last-child {
+    margin-bottom: 0;
+}
+
+.preview-section h4 {
+    color: #fff;
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+}
+
+/* Content Pillars */
+.pillars-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pillar-tag {
+    background: #00ff88;
+    color: #000;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Tone Description */
+.tone-description {
+    color: #ccc;
+    font-style: italic;
+    margin: 0;
+    padding: 15px;
+    background: #2a2a2a;
+    border-radius: 8px;
+    border-left: 4px solid #00ff88;
+}
+
+/* Hashtag Strategy */
+.hashtag-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.hashtag-category {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.category-label {
+    color: #00ff88;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.hashtag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.hashtag-tag {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.hashtag-tag.broad {
+    background: #4a90e2;
+    color: #fff;
+}
+
+.hashtag-tag.niche {
+    background: #ff6b6b;
+    color: #fff;
+}
+
+/* Posting Info */
+.posting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.posting-frequency,
+.posting-times {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label {
+    color: #00ff88;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.value {
+    color: #fff;
+    font-size: 1rem;
+}
+
+.time-slots {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.time-slot {
+    background: #2a2a2a;
+    color: #00ff88;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    border: 1px solid #444;
+}
+
+/* Strategies List */
+.strategies-list {
+    margin: 0;
+    padding-left: 20px;
+    color: #ccc;
+}
+
+.strategies-list li {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+/* Preview Actions */
+.preview-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* Error Message */
+.error-message {
+    text-align: center;
+    padding: 60px 20px;
+    color: #ff4444;
+}
+
+.error-message p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .custom-niche-creator {
+        padding: 15px;
+    }
+    
+    .creator-header h2 {
+        font-size: 1.5rem;
+    }
+    
+    .creator-progress {
+        padding: 0 10px;
+    }
+    
+    .progress-line {
+        width: 60px;
+        margin: 0 10px;
+    }
+    
+    .form-card {
+        padding: 20px;
+    }
+    
+    .preview-card {
+        padding: 20px;
+    }
+    
+    .preview-actions {
+        flex-direction: column;
+    }
+    
+    .hashtag-categories {
+        gap: 10px;
+    }
+    
+    .posting-info {
+        gap: 10px;
+    }
+    
+    .time-slots {
+        gap: 8px;
+    }
+    
+    .pillars-list {
+        gap: 8px;
+    }
+}

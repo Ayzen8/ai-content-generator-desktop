@@ -18,6 +18,8 @@ const enhancedContentQualityService = require('./services/enhanced-content-quali
 const enhancedTwitterService = require('./services/enhanced-twitter-service');
 const errorHandlingService = require('./services/error-handling-service');
 const databaseOptimizationService = require('./services/database-optimization-service');
+const customNicheService = require('./services/custom-niche-service');
+const performanceOptimizationService = require('./services/performance-optimization-service');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -2965,6 +2967,204 @@ app.post('/api/database/cleanup', async (req, res) => {
             endpoint: '/api/database/cleanup',
             method: 'POST',
             userAction: 'database_cleanup'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Advanced Analytics API Endpoints
+app.get('/api/analytics/predictive/:nicheId/:platform', async (req, res) => {
+    try {
+        const { nicheId, platform } = req.params;
+        const predictions = await advancedAnalyticsService.generatePredictiveAnalytics(parseInt(nicheId), platform);
+        res.json(predictions);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/analytics/predictive',
+            method: 'GET',
+            userAction: 'get_predictive_analytics'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/analytics/trends', async (req, res) => {
+    try {
+        const { platform, nicheId } = req.query;
+        const trends = await advancedAnalyticsService.analyzeContentTrends(platform, nicheId ? parseInt(nicheId) : null);
+        res.json(trends);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/analytics/trends',
+            method: 'GET',
+            userAction: 'get_content_trends'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/analytics/optimization-suggestions', async (req, res) => {
+    try {
+        const suggestions = await advancedAnalyticsService.generateOptimizationRecommendations();
+        res.json(suggestions);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/analytics/optimization-suggestions',
+            method: 'GET',
+            userAction: 'get_optimization_suggestions'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Custom Niche API Endpoints
+app.post('/api/niches/custom', async (req, res) => {
+    try {
+        const nicheData = req.body;
+        const result = await customNicheService.createCustomNiche(nicheData);
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/niches/custom',
+            method: 'POST',
+            userAction: 'create_custom_niche'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/niches/custom', async (req, res) => {
+    try {
+        const niches = await customNicheService.getCustomNiches();
+        res.json(niches);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/niches/custom',
+            method: 'GET',
+            userAction: 'get_custom_niches'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/niches/custom/:id', async (req, res) => {
+    try {
+        const nicheId = parseInt(req.params.id);
+        const niche = await customNicheService.getCustomNicheById(nicheId);
+        if (!niche) {
+            return res.status(404).json({ error: 'Custom niche not found' });
+        }
+        res.json(niche);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/niches/custom/:id',
+            method: 'GET',
+            userAction: 'get_custom_niche_by_id'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/niches/custom/:id/personas', async (req, res) => {
+    try {
+        const nicheId = parseInt(req.params.id);
+        const personas = await customNicheService.getNichePersonas(nicheId);
+        res.json(personas);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/niches/custom/:id/personas',
+            method: 'GET',
+            userAction: 'get_niche_personas'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/niches/custom/:id/templates', async (req, res) => {
+    try {
+        const nicheId = parseInt(req.params.id);
+        const templates = await customNicheService.getNicheTemplates(nicheId);
+        res.json(templates);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/niches/custom/:id/templates',
+            method: 'GET',
+            userAction: 'get_niche_templates'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put('/api/niches/custom/:id', async (req, res) => {
+    try {
+        const nicheId = parseInt(req.params.id);
+        const updateData = req.body;
+        const result = await customNicheService.updateCustomNiche(nicheId, updateData);
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/niches/custom/:id',
+            method: 'PUT',
+            userAction: 'update_custom_niche'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/niches/custom/:id', async (req, res) => {
+    try {
+        const nicheId = parseInt(req.params.id);
+        const result = await customNicheService.deleteCustomNiche(nicheId);
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/niches/custom/:id',
+            method: 'DELETE',
+            userAction: 'delete_custom_niche'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Performance Optimization API Endpoints
+app.get('/api/performance/dashboard', async (req, res) => {
+    try {
+        const dashboard = await performanceOptimizationService.getPerformanceDashboard();
+        res.json(dashboard);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/performance/dashboard',
+            method: 'GET',
+            userAction: 'get_performance_dashboard'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/performance/cache/clear', async (req, res) => {
+    try {
+        const result = await performanceOptimizationService.clearAllCache();
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/performance/cache/clear',
+            method: 'POST',
+            userAction: 'clear_cache'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/performance/suggestions/:id/implement', async (req, res) => {
+    try {
+        const suggestionId = parseInt(req.params.id);
+        const result = await performanceOptimizationService.markSuggestionImplemented(suggestionId);
+        res.json(result);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/performance/suggestions/:id/implement',
+            method: 'POST',
+            userAction: 'implement_suggestion'
         });
         res.status(500).json({ error: error.message });
     }
