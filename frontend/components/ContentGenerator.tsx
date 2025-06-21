@@ -173,6 +173,9 @@ const ContentGenerator: React.FC = () => {
   };
 
   const getContentStats = () => {
+    if (!Array.isArray(content)) {
+      return { pending: 0, posted: 0, total: 0 };
+    }
     const pending = content.filter(c => c.status === 'pending').length;
     const posted = content.filter(c => c.status === 'posted').length;
     const total = content.length;
@@ -181,8 +184,11 @@ const ContentGenerator: React.FC = () => {
   };
 
   const renderNicheOptions = () => {
+    if (!Array.isArray(niches)) {
+      return null;
+    }
     // Sort all niches alphabetically by name
-    const sortedNiches = niches.sort((a, b) => a.name.localeCompare(b.name));
+    const sortedNiches = [...niches].sort((a, b) => a.name.localeCompare(b.name));
 
     return sortedNiches.map(niche => (
       <option
@@ -292,7 +298,7 @@ const ContentGenerator: React.FC = () => {
                     {nicheInfo.niche.description}
                   </div>
                   <div className="niche-keywords">
-                    {nicheInfo.niche.keywords.split(',').slice(0, 5).map((keyword, index) => (
+                    {nicheInfo.niche.keywords && nicheInfo.niche.keywords.split(',').slice(0, 5).map((keyword, index) => (
                       <span key={index} className="keyword-tag">
                         {keyword.trim()}
                       </span>
@@ -372,7 +378,7 @@ const ContentGenerator: React.FC = () => {
             </p>
           </div>
         ) : (
-          content.map(item => (
+          Array.isArray(content) && content.map(item => (
             <ContentCard 
               key={item.id}
               content={item}

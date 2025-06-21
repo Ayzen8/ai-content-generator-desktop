@@ -18,7 +18,10 @@ interface DashboardStats {
 
 // SSE setup for real-time updates
 const setupSSE = (onMessage: (data: any) => void) => {
-    const eventSource = new EventSource('http://localhost:3000/api/events');
+    const baseUrl = window.location.hostname === 'localhost'
+        ? 'http://localhost:3000'
+        : window.location.origin;
+    const eventSource = new EventSource(`${baseUrl}/api/events`);
 
     eventSource.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -49,18 +52,20 @@ const Dashboard: React.FC = () => {
 
     useEffect(() => {
         loadStats();
-        // Set up SSE for real-time updates
-        const cleanup = setupSSE((data) => {
-            if (data.type === 'status') {
-                setServiceStatus(data.status);
-            } else if (data.type === 'notification') {
-                setNotifications(prev => [data.message, ...prev].slice(0, 5));
-            } else if (data.type === 'stats') {
-                setStats(data.stats);
-            }
-        });
+        // Only set up SSE in development (localhost)
+        if (window.location.hostname === 'localhost') {
+            const cleanup = setupSSE((data) => {
+                if (data.type === 'status') {
+                    setServiceStatus(data.status);
+                } else if (data.type === 'notification') {
+                    setNotifications(prev => Array.isArray(prev) ? [data.message, ...prev].slice(0, 5) : [data.message]);
+                } else if (data.type === 'stats') {
+                    setStats(data.stats);
+                }
+            });
 
-        return cleanup;
+            return cleanup;
+        }
     }, [refreshKey]);
 
     const loadStats = async () => {
@@ -175,12 +180,12 @@ const Dashboard: React.FC = () => {
 
                         <Card title="Recent Notifications" className="notifications-card">
                             <ul className="notification-list">
-                                {notifications.map((notification, index) => (
+                                {Array.isArray(notifications) && notifications.map((notification, index) => (
                                     <li key={index} className="notification-item">
                                         {notification}
                                     </li>
                                 ))}
-                                {notifications.length === 0 && (
+                                {(!notifications || notifications.length === 0) && (
                                     <li className="notification-item empty">
                                         No recent notifications
                                     </li>
