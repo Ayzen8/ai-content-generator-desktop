@@ -5,12 +5,12 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "npm run build:react",
-    "build:react": "webpack --mode production",
-    "vercel-build": "npm run build",
+    "build": "npx webpack --mode production",
+    "build:react": "npx webpack --mode production",
+    "vercel-build": "npx webpack --mode production",
     "dev": "concurrently \"npm run build\" \"npm run start\"",
     "dev:watch": "concurrently \"npm run watch:react\" \"npm run start\"",
-    "watch:react": "webpack --mode development --watch",
+    "watch:react": "npx webpack --mode development --watch",
     "clean": "rimraf dist",
     "rebuild": "npm run clean && npm run build",
     "test": "echo \"No tests specified\" && exit 0"

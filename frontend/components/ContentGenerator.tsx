@@ -1,7 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ApiService from '../services/api';
 import SoundService from '../services/soundService';
 import ContentCard from './ContentCard';
+import LoadingSpinner from './LoadingSpinner';
+import ErrorHandler from './ErrorHandler';
+import KeyboardShortcutsHelp from './KeyboardShortcutsHelp';
+import { useKeyboardShortcuts, createContentGeneratorShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useMobileDetection } from '../hooks/useMobileDetection';
 
 interface Niche {
   id: number;
@@ -32,6 +37,45 @@ const ContentGenerator: React.FC = () => {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('pending');
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const nicheSelectRef = useRef<HTMLSelectElement>(null);
+
+  // Mobile detection
+  const { isMobile, isTablet, isTouchDevice, screenSize } = useMobileDetection();
+
+  // Keyboard shortcuts
+  const shortcuts = createContentGeneratorShortcuts({
+    generateContent: () => {
+      if (selectedNiche && !generating) {
+        generateContent();
+      }
+    },
+    copyLastContent: () => {
+      if (content.length > 0) {
+        const lastContent = content[0];
+        navigator.clipboard.writeText(lastContent.tweet);
+      }
+    },
+    openSettings: () => {
+      // Will be implemented when settings component is added
+      console.log('Open settings');
+    },
+    toggleTheme: () => {
+      // Will be implemented when theme toggle is added
+      console.log('Toggle theme');
+    },
+    focusNicheSelect: () => {
+      nicheSelectRef.current?.focus();
+    },
+    showHelp: () => {
+      setShowShortcutsHelp(true);
+    },
+    closeModal: () => {
+      setShowShortcutsHelp(false);
+    }
+  });
+
+  useKeyboardShortcuts({ shortcuts });
 
   useEffect(() => {
     loadNiches();
@@ -153,15 +197,24 @@ const ContentGenerator: React.FC = () => {
   const stats = getContentStats();
 
   return (
-    <div className="content-generator">
+    <div className={`content-generator ${isMobile ? 'mobile' : ''} ${isTablet ? 'tablet' : ''} ${isTouchDevice ? 'touch-device' : ''}`}>
       <div className="generator-header">
         <h2>🤖 AI Content Generator</h2>
-        <button 
-          className="test-api-btn"
-          onClick={testGeminiConnection}
-        >
-          🔧 Test API
-        </button>
+        <div className="header-actions">
+          <button
+            className="help-btn"
+            onClick={() => setShowShortcutsHelp(true)}
+            title="Keyboard Shortcuts (Press ?)"
+          >
+            ⌨️ Shortcuts
+          </button>
+          <button
+            className="test-api-btn"
+            onClick={testGeminiConnection}
+          >
+            🔧 Test API
+          </button>
+        </div>
       </div>
 
       {/* Content Stats */}
@@ -185,6 +238,7 @@ const ContentGenerator: React.FC = () => {
         <div className="control-group">
           <label htmlFor="nicheSelect">Select Niche:</label>
           <select
+            ref={nicheSelectRef}
             id="nicheSelect"
             className="niche-dropdown"
             value={selectedNiche || ''}
@@ -196,11 +250,18 @@ const ContentGenerator: React.FC = () => {
         </div>
 
         <button
-          className="generate-btn"
+          className={`generate-btn ${generating ? 'btn-loading' : ''}`}
           onClick={generateContent}
           disabled={!selectedNiche || generating}
         >
-          {generating ? '⏳ Generating...' : '✨ Generate Content'}
+          {generating ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <LoadingSpinner size="small" color="secondary" />
+              Generating...
+            </div>
+          ) : (
+            '✨ Generate Content'
+          )}
         </button>
       </div>
 
@@ -274,16 +335,31 @@ const ContentGenerator: React.FC = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="error-message">
-          ❌ {error}
-        </div>
+        <ErrorHandler
+          error={error}
+          type="inline"
+          onRetry={() => {
+            setError(null);
+            if (generating) {
+              generateContent();
+            } else {
+              loadContent();
+            }
+          }}
+          onDismiss={() => setError(null)}
+        />
       )}
 
       {/* Content Display */}
-      <div className="content-grid">
+      <div className={`content-grid ${screenSize}`}>
         {loading ? (
-          <div className="loading-message">
-            ⏳ Loading content...
+          <div className="loading-container">
+            <LoadingSpinner
+              size="large"
+              text="Loading content..."
+              type="spinner"
+              color="primary"
+            />
           </div>
         ) : content.length === 0 ? (
           <div className="empty-message">
@@ -305,6 +381,13 @@ const ContentGenerator: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Keyboard Shortcuts Help */}
+      <KeyboardShortcutsHelp
+        isOpen={showShortcutsHelp}
+        onClose={() => setShowShortcutsHelp(false)}
+        shortcuts={shortcuts}
+      />
     </div>
   );
 };
