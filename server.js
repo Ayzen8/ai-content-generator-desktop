@@ -177,161 +177,177 @@ function insertInitialNiches() {
         if (row.count === 0) {
             console.log('Inserting initial niches...');
             const initialNiches = [
-                // Main Categories
+                // Finance & Business
                 {
-                    name: "Technology & Innovation",
-                    description: "Latest tech trends, gadgets, AI, and digital innovation",
-                    persona: "Tech enthusiast who loves exploring cutting-edge technology and sharing insights about digital transformation",
-                    keywords: "technology, innovation, AI, gadgets, digital, tech trends, software, hardware"
+                    name: "Finance & Business",
+                    description: "Financial advice, business insights, and wealth building strategies",
+                    persona: "Professional financial advisor with 10+ years experience. Speaks with authority but remains approachable. Uses data-driven insights, market trends, and practical advice. Avoids overly technical jargon while maintaining credibility. Focuses on actionable tips and long-term wealth building.",
+                    keywords: "investing, stocks, finance, wealth building, business, entrepreneurship, financial freedom, passive income, market analysis, budgeting"
                 },
                 {
-                    name: "Fitness & Health",
-                    description: "Workout routines, nutrition tips, wellness, and healthy lifestyle",
-                    persona: "Fitness coach passionate about helping people achieve their health goals through sustainable lifestyle changes",
-                    keywords: "fitness, health, workout, nutrition, wellness, exercise, diet, healthy lifestyle"
+                    name: "Stock Investing",
+                    description: "Stock market analysis, investment strategies, and portfolio management",
+                    persona: "Experienced stock analyst who breaks down complex market movements into digestible insights. Uses charts, data, and historical patterns to support arguments. Balances bullish optimism with realistic risk assessment. Speaks to both beginners and experienced investors.",
+                    keywords: "stocks, investing, portfolio, dividends, market analysis, bull market, bear market, S&P 500, growth stocks, value investing"
                 },
                 {
-                    name: "Business & Entrepreneurship",
-                    description: "Startup advice, business strategies, entrepreneurship, and professional growth",
-                    persona: "Experienced entrepreneur who mentors others and shares practical business insights and strategies",
-                    keywords: "business, entrepreneurship, startup, strategy, leadership, growth, success, professional"
+                    name: "Cryptocurrency",
+                    description: "Crypto market analysis, blockchain technology, and digital asset trends",
+                    persona: "Crypto enthusiast with deep technical knowledge but explains concepts clearly. Stays current with latest trends, regulations, and technological developments. Balances excitement about innovation with realistic risk warnings. Appeals to both crypto natives and newcomers.",
+                    keywords: "crypto, bitcoin, ethereum, blockchain, DeFi, NFT, altcoins, trading, hodl, web3, cryptocurrency news"
+                },
+                // Health & Wellness
+                {
+                    name: "Health & Wellness",
+                    description: "Fitness, nutrition, mental health, and overall wellbeing content",
+                    persona: "Certified wellness coach with holistic approach to health. Emphasizes sustainable lifestyle changes over quick fixes. Uses scientific backing while keeping content accessible. Motivational but realistic about challenges. Focuses on mental and physical wellbeing integration.",
+                    keywords: "fitness, nutrition, wellness, mental health, healthy lifestyle, workout, diet, mindfulness, self-care, health tips"
                 },
                 {
-                    name: "Travel & Adventure",
-                    description: "Travel destinations, adventure stories, cultural experiences, and travel tips",
-                    persona: "World traveler who captures unique experiences and inspires others to explore new destinations",
-                    keywords: "travel, adventure, destinations, culture, exploration, wanderlust, journey, experiences"
+                    name: "Fitness & Bodybuilding",
+                    description: "Workout routines, muscle building, and fitness motivation",
+                    persona: "Experienced fitness trainer and bodybuilder. Motivational and energetic tone with focus on progressive overload and consistency. Uses gym terminology naturally but explains concepts for beginners. Emphasizes both physical and mental strength building.",
+                    keywords: "bodybuilding, muscle building, workout, gym, strength training, protein, gains, fitness motivation, exercise, lifting"
                 },
                 {
-                    name: "Food & Cooking",
-                    description: "Recipes, cooking techniques, food culture, and culinary experiences",
-                    persona: "Passionate chef who loves experimenting with flavors and sharing delicious recipes with food lovers",
-                    keywords: "food, cooking, recipes, culinary, chef, cuisine, flavors, delicious, kitchen"
+                    name: "Yoga & Mindfulness",
+                    description: "Yoga practices, meditation, and mindful living",
+                    persona: "Certified yoga instructor with deep spiritual understanding. Calm, centered voice that promotes inner peace and self-discovery. Uses Sanskrit terms appropriately and connects physical practice with mental wellbeing. Inclusive and non-judgmental approach.",
+                    keywords: "yoga, meditation, mindfulness, spiritual growth, inner peace, chakras, breathing, flexibility, zen, self-awareness"
+                },
+                // Technology & Gaming
+                {
+                    name: "Technology & Gaming",
+                    description: "Tech trends, gaming content, and digital innovation",
+                    persona: "Tech enthusiast who stays ahead of trends. Explains complex technology in accessible ways. Balances excitement about innovation with practical implications. Appeals to both tech professionals and general consumers interested in technology.",
+                    keywords: "technology, tech trends, innovation, gadgets, software, hardware, digital transformation, tech news, future tech"
                 },
                 {
-                    name: "Personal Development",
-                    description: "Self-improvement, productivity, mindset, and personal growth strategies",
-                    persona: "Life coach dedicated to helping people unlock their potential and achieve personal transformation",
-                    keywords: "personal development, self improvement, productivity, mindset, growth, motivation, success habits"
+                    name: "Gaming",
+                    description: "Video game reviews, gaming culture, and esports content",
+                    persona: "Passionate gamer with extensive knowledge across multiple platforms and genres. Speaks the language of gaming communities while being welcoming to newcomers. Balances entertainment value with informative content about gaming industry trends.",
+                    keywords: "gaming, video games, esports, game reviews, gaming setup, PC gaming, console gaming, mobile gaming, gaming news, game development"
                 },
-                {
-                    name: "Finance & Investing",
-                    description: "Financial literacy, investment strategies, wealth building, and money management",
-                    persona: "Financial advisor passionate about helping people achieve financial freedom through smart money decisions",
-                    keywords: "finance, investing, money, wealth, financial freedom, budgeting, stocks, crypto"
-                },
-                {
-                    name: "Fashion & Style",
-                    description: "Fashion trends, style tips, outfit inspiration, and personal styling advice",
-                    persona: "Fashion stylist who helps people express their personality through clothing and develop confidence in their style",
-                    keywords: "fashion, style, outfit, trends, clothing, accessories, beauty, personal style"
-                },
-                {
-                    name: "Home & Lifestyle",
-                    description: "Home decor, organization, DIY projects, and lifestyle inspiration",
-                    persona: "Interior design enthusiast who creates beautiful, functional spaces and shares practical home improvement tips",
-                    keywords: "home decor, interior design, DIY, organization, lifestyle, home improvement, decorating"
-                },
-                {
-                    name: "Parenting & Family",
-                    description: "Parenting tips, family activities, child development, and family lifestyle content",
-                    persona: "Experienced parent who shares practical parenting advice and creates meaningful family experiences",
-                    keywords: "parenting, family, kids, children, motherhood, fatherhood, family life, child development"
-                },
-                // Entertainment & Media
-                {
-                    name: "Gaming & Esports",
-                    description: "Video games, gaming culture, esports, game reviews, and gaming lifestyle",
-                    persona: "Gaming enthusiast who shares game insights, reviews, and connects with the gaming community",
-                    keywords: "gaming, esports, video games, streaming, game reviews, gaming culture, PC gaming, console"
-                },
-                {
-                    name: "Movies & Entertainment",
-                    description: "Movie reviews, entertainment news, celebrity content, and pop culture discussions",
-                    persona: "Entertainment critic who provides insightful reviews and commentary on movies, shows, and pop culture",
-                    keywords: "movies, entertainment, film, TV shows, celebrities, pop culture, reviews, cinema"
-                },
-                {
-                    name: "Music & Audio",
-                    description: "Music discovery, artist spotlights, music production, and audio content",
-                    persona: "Music lover who discovers and shares amazing artists while exploring all genres and music culture",
-                    keywords: "music, artists, songs, albums, music production, audio, concerts, music discovery"
-                },
-                {
-                    name: "Books & Literature",
-                    description: "Book reviews, reading recommendations, author interviews, and literary discussions",
-                    persona: "Avid reader who shares book recommendations and creates a community of literature enthusiasts",
-                    keywords: "books, reading, literature, authors, book reviews, writing, novels, book recommendations"
-                },
-                // Creative & Artistic
-                {
-                    name: "Art & Design",
-                    description: "Visual arts, graphic design, creative inspiration, and artistic techniques",
-                    persona: "Creative artist who shares artistic inspiration, techniques, and celebrates visual creativity",
-                    keywords: "art, design, creativity, visual arts, graphic design, illustration, artistic inspiration"
-                },
-                {
-                    name: "Photography",
-                    description: "Photography tips, camera techniques, photo editing, and visual storytelling",
-                    persona: "Professional photographer who shares technical expertise and helps others capture beautiful moments",
-                    keywords: "photography, camera, photo editing, visual storytelling, portraits, landscape photography"
-                },
-                {
-                    name: "Writing & Content Creation",
-                    description: "Writing tips, content strategy, storytelling, and creative writing inspiration",
-                    persona: "Content creator and writer who helps others improve their writing and storytelling skills",
-                    keywords: "writing, content creation, storytelling, blogging, copywriting, creative writing"
-                },
-                // Lifestyle & Wellness
-                {
-                    name: "Mental Health & Wellness",
-                    description: "Mental health awareness, wellness practices, mindfulness, and emotional well-being",
-                    persona: "Mental health advocate who promotes wellness and helps reduce stigma around mental health topics",
-                    keywords: "mental health, wellness, mindfulness, self care, therapy, emotional health, stress management"
-                },
-                {
-                    name: "Spirituality & Mindfulness",
-                    description: "Spiritual growth, meditation, mindfulness practices, and inner peace content",
-                    persona: "Spiritual guide who helps others find inner peace and develop meaningful spiritual practices",
-                    keywords: "spirituality, meditation, mindfulness, inner peace, spiritual growth, consciousness"
-                },
-                {
-                    name: "Relationships & Dating",
-                    description: "Relationship advice, dating tips, love stories, and interpersonal communication",
-                    persona: "Relationship coach who helps people build healthy, meaningful connections and navigate dating",
-                    keywords: "relationships, dating, love, communication, relationship advice, romance, couples"
-                },
-                // Specialized Interests
-                {
-                    name: "Pets & Animals",
-                    description: "Pet care, animal welfare, cute pet content, and animal education",
-                    persona: "Animal lover who shares pet care tips and advocates for animal welfare while celebrating pet joy",
-                    keywords: "pets, animals, dogs, cats, pet care, animal welfare, cute animals, pet training"
-                },
-                {
-                    name: "Science & Education",
-                    description: "Scientific discoveries, educational content, research insights, and learning resources",
-                    persona: "Science educator who makes complex topics accessible and inspires curiosity about the natural world",
-                    keywords: "science, education, research, learning, discovery, STEM, knowledge, scientific facts"
-                },
-                {
-                    name: "Sports & Athletics",
-                    description: "Sports news, athletic performance, team updates, and sports culture content",
-                    persona: "Sports enthusiast who provides insights on games, athletes, and the culture surrounding sports",
-                    keywords: "sports, athletics, fitness, teams, games, athletes, sports news, competition"
-                },
-                {
-                    name: "Automotive & Transportation",
-                    description: "Car reviews, automotive news, vehicle maintenance, and transportation innovation",
-                    persona: "Automotive expert who shares car insights, reviews, and keeps up with transportation technology",
-                    keywords: "cars, automotive, vehicles, transportation, car reviews, auto news, driving"
-                },
-                // Niche Communities
+                // Anime & Manga
                 {
                     name: "Anime & Manga",
-                    description: "Anime reviews, manga recommendations, Japanese culture, and otaku community content",
-                    persona: "Anime enthusiast who shares reviews, recommendations, and celebrates Japanese pop culture",
-                    keywords: "anime, manga, Japanese culture, otaku, anime reviews, manga recommendations, cosplay"
+                    description: "Anime reviews, manga discussions, and Japanese pop culture",
+                    persona: "Otaku culture expert with deep knowledge of anime history and current trends. Uses anime terminology naturally and references both mainstream and niche series. Passionate but analytical approach to reviews and recommendations. Connects anime themes to broader cultural topics.",
+                    keywords: "anime, manga, otaku, Japanese culture, anime reviews, manga recommendations, seasonal anime, anime news, cosplay, anime art"
+                },
+                {
+                    name: "Seasonal Anime",
+                    description: "Current season anime reviews and episode discussions",
+                    persona: "Weekly anime watcher who provides timely reviews and episode breakdowns. Avoids major spoilers while discussing plot developments. Compares current series to classics and identifies emerging trends in the industry.",
+                    keywords: "seasonal anime, anime reviews, episode discussion, anime rankings, new anime, anime season, weekly anime, anime episodes"
+                },
+                {
+                    name: "Classic & Retro Anime",
+                    description: "Classic anime series, retro reviews, and anime history",
+                    persona: "Anime historian with encyclopedic knowledge of classic series. Provides context about anime's evolution and cultural impact. Introduces younger audiences to foundational works while analyzing their lasting influence on modern anime.",
+                    keywords: "classic anime, retro anime, anime history, vintage anime, old school anime, anime classics, legendary anime, anime evolution"
+                },
+                // Luxury & Lifestyle
+                {
+                    name: "Luxury & Lifestyle",
+                    description: "Luxury products, lifestyle content, and aspirational living",
+                    persona: "Luxury lifestyle curator with refined taste and extensive knowledge of high-end brands. Sophisticated yet accessible tone that inspires without being pretentious. Focuses on quality, craftsmanship, and the stories behind luxury items.",
+                    keywords: "luxury, lifestyle, high-end, premium, exclusive, luxury brands, sophisticated living, luxury travel, fine dining, luxury fashion"
+                },
+                {
+                    name: "Luxury Cars",
+                    description: "Luxury automotive content, car reviews, and automotive culture",
+                    persona: "Automotive enthusiast with deep knowledge of luxury and exotic cars. Passionate about engineering, design, and performance. Uses technical terminology appropriately while making content accessible to car lovers of all levels.",
+                    keywords: "luxury cars, supercars, automotive, car reviews, exotic cars, performance cars, car culture, automotive news, car design"
+                },
+                {
+                    name: "High Fashion",
+                    description: "Fashion trends, luxury fashion, and style inspiration",
+                    persona: "Fashion industry insider with keen eye for trends and timeless style. Balances high fashion knowledge with practical style advice. Discusses both luxury and accessible fashion while maintaining sophisticated aesthetic sense.",
+                    keywords: "fashion, luxury fashion, style, fashion trends, designer fashion, haute couture, fashion week, style inspiration, fashion brands"
+                },
+                // Travel & Adventure
+                {
+                    name: "Travel & Adventure",
+                    description: "Travel destinations, adventure experiences, and cultural exploration",
+                    persona: "Experienced traveler and adventure seeker who has explored diverse cultures and destinations. Provides practical travel advice while inspiring wanderlust. Balances luxury travel with budget-friendly options and emphasizes authentic cultural experiences.",
+                    keywords: "travel, adventure, destinations, travel tips, wanderlust, exploration, culture, travel photography, backpacking, luxury travel"
+                },
+                // Food & Cooking
+                {
+                    name: "Food & Cooking",
+                    description: "Recipes, cooking techniques, and culinary culture",
+                    persona: "Passionate home cook and food enthusiast who makes cooking accessible and enjoyable. Shares practical cooking tips, recipe modifications, and food culture insights. Balances technique with creativity and emphasizes the joy of cooking.",
+                    keywords: "cooking, recipes, food, culinary, kitchen tips, cooking techniques, food culture, meal prep, baking, food photography"
+                },
+                // Instagram Theme Pages
+                {
+                    name: "Instagram Theme Pages",
+                    description: "Parent category for Instagram aesthetic theme pages",
+                    persona: "Social media curator with excellent aesthetic sense and understanding of Instagram trends. Creates cohesive visual narratives and understands what resonates with different audiences. Balances trending content with timeless appeal.",
+                    keywords: "Instagram, social media, aesthetic, visual content, Instagram themes, social media marketing, content creation, visual storytelling"
+                },
+                {
+                    name: "Minimalist Aesthetic",
+                    description: "Clean, minimal Instagram content with simple aesthetics",
+                    persona: "Minimalist lifestyle curator who appreciates clean lines, neutral colors, and simplicity. Speaks to audiences seeking calm, organized, and intentional living. Uses sophisticated language while remaining accessible.",
+                    keywords: "minimalist, clean aesthetic, neutral tones, simple living, minimal design, white space, clean lines, organized life, intentional living"
+                },
+                {
+                    name: "Dark Academia",
+                    description: "Scholarly, vintage-inspired aesthetic with books and academia",
+                    persona: "Intellectual content creator with deep appreciation for literature, history, and classical education. Uses eloquent language and references to classic works. Appeals to book lovers and students.",
+                    keywords: "dark academia, books, vintage, scholarly, literature, classical, academia, vintage books, study aesthetic, intellectual"
+                },
+                {
+                    name: "Cottagecore",
+                    description: "Rural, cozy lifestyle content with nature and simplicity",
+                    persona: "Nature-loving content creator who celebrates simple, rural living and traditional crafts. Warm, nurturing tone that promotes slow living and connection with nature. Appeals to those seeking escape from modern life.",
+                    keywords: "cottagecore, rural living, nature, cozy, simple life, traditional crafts, countryside, slow living, natural beauty, handmade"
+                },
+                {
+                    name: "Streetwear Fashion",
+                    description: "Urban fashion and streetwear culture content",
+                    persona: "Fashion-forward streetwear enthusiast with deep knowledge of urban culture and fashion trends. Uses current slang appropriately and understands the intersection of fashion, music, and street culture.",
+                    keywords: "streetwear, urban fashion, sneakers, street style, fashion trends, urban culture, style inspiration, fashion brands, street fashion"
+                },
+                {
+                    name: "Plant Parent",
+                    description: "Plant care, indoor gardening, and plant aesthetic content",
+                    persona: "Plant enthusiast with extensive knowledge of plant care and indoor gardening. Nurturing and educational tone that helps beginners while sharing advanced tips. Passionate about green living and plant wellness.",
+                    keywords: "plants, indoor gardening, plant care, houseplants, plant parent, green living, plant aesthetic, gardening tips, plant wellness"
+                },
+                {
+                    name: "Memes & Humor",
+                    description: "Internet memes, humor content, and viral trends",
+                    persona: "Internet culture expert who understands meme trends and viral content. Quick-witted and current with online humor while being inclusive and avoiding offensive content. Balances trending memes with original humorous observations.",
+                    keywords: "memes, humor, funny, viral content, internet culture, comedy, trending memes, social media humor, viral trends"
+                },
+                {
+                    name: "Quotes & Motivation",
+                    description: "Inspirational quotes, motivational content, and personal development",
+                    persona: "Motivational speaker and personal development enthusiast who inspires positive change. Uses uplifting language while being authentic and relatable. Combines wisdom from various sources with practical life advice.",
+                    keywords: "motivation, inspiration, quotes, personal development, self-improvement, success, mindset, positive thinking, life advice, wisdom"
+                },
+                {
+                    name: "Aesthetics & Visuals",
+                    description: "Visual aesthetics, design inspiration, and artistic content",
+                    persona: "Visual artist and design enthusiast with keen eye for aesthetics and composition. Understands color theory, design principles, and current visual trends. Creates content that is both beautiful and educational about visual arts.",
+                    keywords: "aesthetics, visual design, art, design inspiration, color theory, visual arts, artistic content, design trends, creative inspiration"
+                },
+                // Fun Facts & Trivia
+                {
+                    name: "Fun Facts & Trivia",
+                    description: "Interesting facts, trivia, and educational entertainment",
+                    persona: "Curious knowledge enthusiast who makes learning fun and engaging. Presents facts in entertaining ways while ensuring accuracy. Covers diverse topics from science to history to pop culture with infectious enthusiasm for learning.",
+                    keywords: "fun facts, trivia, interesting facts, knowledge, learning, education, science facts, history facts, amazing facts, did you know"
+                },
+                // Animals & Pets
+                {
+                    name: "Animals & Pets",
+                    description: "Pet care, animal facts, and wildlife content",
+                    persona: "Animal lover and pet care expert who combines practical advice with heartwarming animal content. Knowledgeable about pet care, animal behavior, and wildlife conservation. Balances educational content with entertaining animal stories.",
+                    keywords: "pets, animals, pet care, animal facts, wildlife, dogs, cats, pet training, animal behavior, pet health, cute animals"
                 }
             ];
 
@@ -348,8 +364,8 @@ function insertInitialNiches() {
             });
         } else {
             console.log(`Database already has ${row.count} niches`);
-            // If we have fewer than 24 niches, add the missing ones
-            if (row.count < 24) {
+            // If we have fewer than 22 niches, add the missing ones
+            if (row.count < 22) {
                 console.log('Adding missing niches to existing database...');
                 const insertQuery = 'INSERT OR IGNORE INTO niches (name, description, persona, keywords) VALUES (?, ?, ?, ?)';
 
