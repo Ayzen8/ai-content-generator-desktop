@@ -14,6 +14,7 @@ const credentialStorage = require('./services/credential-storage');
 const advancedAnalyticsService = require('./services/advanced-analytics-service');
 const contentTemplateService = require('./services/content-template-service');
 const hashtagResearchService = require('./services/hashtag-research-service');
+const enhancedContentQualityService = require('./services/enhanced-content-quality-service');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -2642,6 +2643,110 @@ app.post('/api/hashtag-research/niche/:nicheId', async (req, res) => {
     } catch (error) {
         console.error('Error researching niche hashtags:', error);
         res.status(500).json({ error: 'Failed to research niche hashtags' });
+    }
+});
+
+// Enhanced Content Quality API Endpoints
+app.post('/api/content/analyze', async (req, res) => {
+    try {
+        const { content, niche, platform } = req.body;
+
+        if (!content) {
+            return res.status(400).json({ error: 'Content is required' });
+        }
+
+        const analysis = await enhancedContentQualityService.analyzeContent(
+            content,
+            niche,
+            platform || 'x'
+        );
+
+        res.json(analysis);
+    } catch (error) {
+        console.error('Error analyzing content:', error);
+        res.status(500).json({ error: 'Failed to analyze content' });
+    }
+});
+
+app.post('/api/content/optimize', async (req, res) => {
+    try {
+        const { content, niche, platform, analysis } = req.body;
+
+        if (!content) {
+            return res.status(400).json({ error: 'Content is required' });
+        }
+
+        // Use AI to optimize content based on analysis
+        const optimizationPrompt = `
+        You are a content optimization expert. Based on the following analysis, improve this content:
+
+        ORIGINAL CONTENT:
+        ${content}
+
+        ANALYSIS RESULTS:
+        - Overall Score: ${analysis?.overall_score || 'N/A'}
+        - Engagement Score: ${analysis?.detailed_scores?.engagement?.score || 'N/A'}
+        - Hook Strength: ${analysis?.detailed_scores?.hook_strength?.score || 'N/A'}
+        - Call-to-Action: ${analysis?.detailed_scores?.call_to_action?.score || 'N/A'}
+
+        OPTIMIZATION SUGGESTIONS:
+        ${analysis?.optimization_suggestions?.map(s => `- ${s.suggestion}`).join('\n') || 'None'}
+
+        PLATFORM: ${platform || 'X'}
+        NICHE: ${niche?.name || 'General'}
+
+        Please provide an optimized version that:
+        1. Improves the hook/opening line
+        2. Enhances engagement potential
+        3. Adds better call-to-action
+        4. Maintains the original message and tone
+        5. Optimizes for ${platform || 'X'} platform
+
+        Return only the optimized content, no explanations.
+        `;
+
+        const optimizedContent = await aiModelManager.generateContent(
+            niche || { name: 'General', persona: 'Content optimizer' },
+            'optimization',
+            optimizationPrompt
+        );
+
+        res.json({
+            optimized_content: optimizedContent.x_post || optimizedContent.content || content,
+            original_analysis: analysis
+        });
+    } catch (error) {
+        console.error('Error optimizing content:', error);
+        res.status(500).json({ error: 'Failed to optimize content' });
+    }
+});
+
+app.post('/api/content/quality-score', async (req, res) => {
+    try {
+        const { content, niche, platform } = req.body;
+
+        if (!content) {
+            return res.status(400).json({ error: 'Content is required' });
+        }
+
+        const analysis = await enhancedContentQualityService.analyzeContent(
+            content,
+            niche,
+            platform || 'x'
+        );
+
+        // Return simplified score for quick checks
+        res.json({
+            overall_score: analysis.overall_score,
+            viral_potential: analysis.viral_potential,
+            engagement_prediction: analysis.engagement_prediction,
+            category: analysis.overall_score >= 80 ? 'Excellent' :
+                     analysis.overall_score >= 60 ? 'Good' :
+                     analysis.overall_score >= 40 ? 'Average' : 'Needs Improvement'
+        });
+    } catch (error) {
+        console.error('Error getting quality score:', error);
+        res.status(500).json({ error: 'Failed to get quality score' });
     }
 });
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ApiService from '../services/api';
 import SoundService from '../services/soundService';
 import ContentCard from './ContentCard';
+import ContentOptimizer from './ContentOptimizer';
 import LoadingSpinner from './LoadingSpinner';
 import ErrorHandler from './ErrorHandler';
 import KeyboardShortcutsHelp from './KeyboardShortcutsHelp';
@@ -38,6 +39,8 @@ const ContentGenerator: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>('pending');
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const [showOptimizer, setShowOptimizer] = useState(false);
+  const [optimizerContent, setOptimizerContent] = useState('');
   const nicheSelectRef = useRef<HTMLSelectElement>(null);
 
   // Mobile detection
@@ -215,6 +218,14 @@ const ContentGenerator: React.FC = () => {
             ⌨️ Shortcuts
           </button>
           <button
+            className="optimizer-btn"
+            onClick={() => setShowOptimizer(true)}
+            disabled={content.length === 0}
+            title="Optimize your latest content"
+          >
+            📊 Optimizer
+          </button>
+          <button
             className="test-api-btn"
             onClick={testGeminiConnection}
           >
@@ -387,6 +398,53 @@ const ContentGenerator: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Content Optimizer Modal */}
+      {showOptimizer && (
+        <div className="optimizer-modal-overlay">
+          <div className="optimizer-modal">
+            <div className="modal-header">
+              <h3>📊 Content Optimizer</h3>
+              <button
+                className="close-modal-btn"
+                onClick={() => setShowOptimizer(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="modal-content">
+              <div className="optimizer-input">
+                <label>Content to Optimize:</label>
+                <textarea
+                  value={optimizerContent}
+                  onChange={(e) => setOptimizerContent(e.target.value)}
+                  placeholder={content.length > 0 ? content[0].tweet : "Enter content to analyze and optimize..."}
+                  rows={4}
+                />
+                {content.length > 0 && !optimizerContent && (
+                  <button
+                    className="load-latest-btn"
+                    onClick={() => setOptimizerContent(content[0].tweet)}
+                  >
+                    📝 Load Latest Content
+                  </button>
+                )}
+              </div>
+
+              {optimizerContent && (
+                <ContentOptimizer
+                  content={optimizerContent}
+                  niche={niches.find(n => n.id === selectedNiche)}
+                  platform="x"
+                  onOptimizedContent={(optimized) => {
+                    setOptimizerContent(optimized);
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Keyboard Shortcuts Help */}
       <KeyboardShortcutsHelp
