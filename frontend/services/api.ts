@@ -62,6 +62,27 @@ export class ApiService {
         }
         return await response.json();
     }
+
+    // Advanced Analytics Methods
+    static async getAdvancedAnalytics(timeframe: string = '30d') {
+        return this.get(`/api/analytics/dashboard/${timeframe}`);
+    }
+
+    static async getPredictiveAnalytics() {
+        return this.get('/api/analytics/predictive');
+    }
+
+    static async recordContentPerformance(contentId: number, platform: string, metrics: any) {
+        return this.post('/api/analytics/content-performance', { contentId, platform, metrics });
+    }
+
+    static async recordGrowthMetrics(platform: string, metrics: any) {
+        return this.post('/api/analytics/growth-metrics', { platform, metrics });
+    }
+
+    static async recordGrowthBotAnalytics(metrics: any) {
+        return this.post('/api/analytics/growth-bot', { metrics });
+    }
 }
 
 export default ApiService;

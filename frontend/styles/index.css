@@ -1,3 +1,13 @@
+/* Component Styles */
+@import url('./content.css');
+@import url('./dashboard.css');
+@import url('./analytics.css');
+@import url('./advanced-analytics.css');
+@import url('./history.css');
+@import url('./loading.css');
+@import url('./niche.css');
+@import url('./settings.css');
+
 /* Global Dark Theme Styles */
 :root {
   --bg-primary: #0a0a0a;

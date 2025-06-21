@@ -11,6 +11,7 @@ const AIModelManager = require('./services/ai-model-manager');
 const ContentQualityService = require('./services/content-quality-service');
 const growthBotService = require('./services/growth-bot-service');
 const credentialStorage = require('./services/credential-storage');
+const advancedAnalyticsService = require('./services/advanced-analytics-service');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -1669,9 +1670,9 @@ app.post('/api/growth-bot/stop', (req, res) => {
     }
 });
 
-app.get('/api/growth-bot/stats', (req, res) => {
+app.get('/api/growth-bot/stats', async (req, res) => {
     try {
-        const stats = growthBotService.getStats();
+        const stats = await growthBotService.getStats();
         res.json(stats);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -2375,6 +2376,76 @@ module.exports = app;
             process.exit(0);
         });
     });
+
+// Advanced Analytics API Endpoints
+app.get('/api/analytics/dashboard/:timeframe?', async (req, res) => {
+    try {
+        const timeframe = req.params.timeframe || '30d';
+        const analytics = await advancedAnalyticsService.getDashboardAnalytics(timeframe);
+        res.json(analytics);
+    } catch (error) {
+        console.error('Error getting dashboard analytics:', error);
+        res.status(500).json({ error: 'Failed to get analytics data' });
+    }
+});
+
+app.get('/api/analytics/predictive', async (req, res) => {
+    try {
+        const predictions = await advancedAnalyticsService.getPredictiveAnalytics();
+        res.json(predictions);
+    } catch (error) {
+        console.error('Error getting predictive analytics:', error);
+        res.status(500).json({ error: 'Failed to get predictive analytics' });
+    }
+});
+
+app.post('/api/analytics/content-performance', async (req, res) => {
+    try {
+        const { contentId, platform, metrics } = req.body;
+
+        if (!contentId || !platform || !metrics) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const result = await advancedAnalyticsService.recordContentPerformance(contentId, platform, metrics);
+        res.json({ success: true, id: result });
+    } catch (error) {
+        console.error('Error recording content performance:', error);
+        res.status(500).json({ error: 'Failed to record content performance' });
+    }
+});
+
+app.post('/api/analytics/growth-metrics', async (req, res) => {
+    try {
+        const { platform, metrics } = req.body;
+
+        if (!platform || !metrics) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const result = await advancedAnalyticsService.recordGrowthMetrics(platform, metrics);
+        res.json({ success: true, id: result });
+    } catch (error) {
+        console.error('Error recording growth metrics:', error);
+        res.status(500).json({ error: 'Failed to record growth metrics' });
+    }
+});
+
+app.post('/api/analytics/growth-bot', async (req, res) => {
+    try {
+        const { metrics } = req.body;
+
+        if (!metrics) {
+            return res.status(400).json({ error: 'Missing metrics data' });
+        }
+
+        const result = await advancedAnalyticsService.recordGrowthBotAnalytics(metrics);
+        res.json({ success: true, id: result });
+    } catch (error) {
+        console.error('Error recording growth bot analytics:', error);
+        res.status(500).json({ error: 'Failed to record growth bot analytics' });
+    }
+});
 
 // Start server
 const PORT = process.env.PORT || 3001;

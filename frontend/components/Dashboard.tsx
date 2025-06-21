@@ -6,6 +6,7 @@ import ContentGenerator from './ContentGenerator';
 import ContentHistory from './ContentHistory';
 import ContentVariations from './ContentVariations';
 import Analytics from './Analytics';
+import AdvancedAnalyticsDashboard from './AdvancedAnalyticsDashboard';
 import Settings from './Settings';
 import GrowthBot from './GrowthBot';
 import { ApiService } from '../services/api';
@@ -42,7 +43,7 @@ const setupSSE = (onMessage: (data: any) => void) => {
 const Dashboard: React.FC = () => {
     const [serviceStatus, setServiceStatus] = useState<'running' | 'stopped'>('stopped');
     const [notifications, setNotifications] = useState<string[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'analytics' | 'niches' | 'growth-bot' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'analytics' | 'advanced-analytics' | 'niches' | 'growth-bot' | 'settings'>('overview');
     const [stats, setStats] = useState<DashboardStats>({
         totalContent: 0,
         pendingContent: 0,
@@ -137,6 +138,13 @@ const Dashboard: React.FC = () => {
                 >
                     <span className="tab-icon">📊</span>
                     Analytics
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'advanced-analytics' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('advanced-analytics')}
+                >
+                    <span className="tab-icon">📈</span>
+                    Advanced Analytics
                 </button>
                 <button
                     className={`tab-btn ${activeTab === 'niches' ? 'active' : ''}`}
@@ -240,6 +248,10 @@ const Dashboard: React.FC = () => {
 
                 {activeTab === 'analytics' && (
                     <Analytics />
+                )}
+
+                {activeTab === 'advanced-analytics' && (
+                    <AdvancedAnalyticsDashboard />
                 )}
 
                 {activeTab === 'niches' && (

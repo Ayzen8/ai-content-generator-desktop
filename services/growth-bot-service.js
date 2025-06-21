@@ -1,5 +1,6 @@
 const { TwitterApi } = require('twitter-api-v2');
 const geminiService = require('./gemini-service');
+const advancedAnalyticsService = require('./advanced-analytics-service');
 
 class GrowthBotService {
     constructor() {
@@ -35,7 +36,15 @@ class GrowthBotService {
             retweetsToday: 0,
             followersGained: 0,
             lastReset: new Date().toDateString(),
-            humanPostsToday: 0
+            humanPostsToday: 0,
+            dmsSentToday: 0,
+            engagementRate: 0,
+            totalFollowersGained: 0,
+            totalEngagements: 0,
+            averageResponseRate: 0,
+            bestPerformingContent: [],
+            weeklyGrowth: 0,
+            monthlyGrowth: 0
         };
         this.actionQueue = [];
         this.isProcessing = false;
@@ -597,20 +606,59 @@ Reply:`;
     }
 
     // Check if we can perform more actions today
-    canPerformActions() {
-        this.resetDailyStatsIfNeeded();
-        
+    async canPerformActions() {
+        await this.resetDailyStatsIfNeeded();
+
         return this.stats.followsToday < this.config.maxFollowsPerHour &&
                this.stats.likesToday < this.config.maxLikesPerHour &&
                this.stats.commentsToday < this.config.maxCommentsPerHour;
     }
 
     // Reset daily stats if it's a new day
-    resetDailyStatsIfNeeded() {
+    async resetDailyStatsIfNeeded() {
         const today = new Date().toDateString();
         if (this.stats.lastReset !== today) {
+            // Record yesterday's analytics before reset
+            if (this.stats.lastReset) {
+                await this.recordDailyAnalytics();
+            }
             this.resetDailyStats();
         }
+    }
+
+    // Record daily analytics to the advanced analytics service
+    async recordDailyAnalytics() {
+        try {
+            const metrics = {
+                actions_performed: this.stats.followsToday + this.stats.likesToday + this.stats.commentsToday + this.stats.retweetsToday,
+                likes_given: this.stats.likesToday,
+                comments_posted: this.stats.commentsToday,
+                follows_made: this.stats.followsToday,
+                followers_gained: this.stats.followersGained,
+                engagement_received: this.stats.totalEngagements,
+                success_rate: this.calculateSuccessRate(),
+                target_niches: this.config.targetNiches || [],
+                performance_metrics: {
+                    humanPostsToday: this.stats.humanPostsToday,
+                    engagementRate: this.stats.engagementRate,
+                    averageResponseRate: this.stats.averageResponseRate
+                }
+            };
+
+            await advancedAnalyticsService.recordGrowthBotAnalytics(metrics);
+            console.log('📊 Growth Bot analytics recorded for', this.stats.lastReset);
+        } catch (error) {
+            console.error('Error recording Growth Bot analytics:', error);
+        }
+    }
+
+    // Calculate success rate based on actions vs results
+    calculateSuccessRate() {
+        const totalActions = this.stats.followsToday + this.stats.likesToday + this.stats.commentsToday;
+        if (totalActions === 0) return 0;
+
+        const successfulActions = this.stats.followersGained + this.stats.totalEngagements;
+        return Math.min(successfulActions / totalActions, 1); // Cap at 100%
     }
 
     // Reset daily statistics
@@ -623,6 +671,7 @@ Reply:`;
             commentsToday: 0,
             retweetsToday: 0,
             humanPostsToday: 0,
+            followersGained: 0, // Reset daily followers gained
             lastReset: today
         };
     }
@@ -667,8 +716,8 @@ Reply:`;
     }
 
     // Get current statistics
-    getStats() {
-        this.resetDailyStatsIfNeeded();
+    async getStats() {
+        await this.resetDailyStatsIfNeeded();
         return {
             ...this.stats,
             isRunning: this.isRunning,
