@@ -1,34 +1,9 @@
 {
   "version": 2,
-  "name": "ezbot",
-  "builds": [
+  "rewrites": [
     {
-      "src": "server.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "source": "/(.*)",
+      "destination": "/index.js"
     }
-  ],
-  "routes": [
-    {
-      "src": "/dist/(.*)",
-      "dest": "/dist/$1"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/server.js"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }

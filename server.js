@@ -1541,29 +1541,34 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start server
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-    console.log('API endpoints available:');
-    console.log('  GET  /api/stats - Dashboard statistics');
-    console.log('  GET  /api/niches - List all niches');
-    console.log('  POST /api/niches - Create new niche');
-    console.log('  GET  /api/events - Server-Sent Events for real-time updates');
-    console.log('  POST /api/generate-content - Generate AI content for niche');
-    console.log('  GET  /api/content - Get generated content');
-    console.log('  PATCH /api/content/:id - Update content status');
-    console.log('  GET  /api/test-gemini - Test Gemini API connection');
-});
+// Export app for Vercel serverless deployment
+module.exports = app;
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-    console.log('\nShutting down server...');
-    db.close((err) => {
-        if (err) {
-            console.error('Error closing database:', err.message);
-        } else {
-            console.log('Database connection closed');
-        }
-        process.exit(0);
+// Start server only in development
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => {
+        console.log(`Server running at http://localhost:${port}`);
+        console.log('API endpoints available:');
+        console.log('  GET  /api/stats - Dashboard statistics');
+        console.log('  GET  /api/niches - List all niches');
+        console.log('  POST /api/niches - Create new niche');
+        console.log('  GET  /api/events - Server-Sent Events for real-time updates');
+        console.log('  POST /api/generate-content - Generate AI content for niche');
+        console.log('  GET  /api/content - Get generated content');
+        console.log('  PATCH /api/content/:id - Update content status');
+        console.log('  GET  /api/test-gemini - Test Gemini API connection');
     });
-});
+
+    // Graceful shutdown
+    process.on('SIGINT', () => {
+        console.log('\nShutting down server...');
+        db.close((err) => {
+            if (err) {
+                console.error('Error closing database:', err.message);
+            } else {
+                console.log('Database connection closed');
+            }
+            process.exit(0);
+        });
+    });
+}
