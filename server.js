@@ -177,6 +177,7 @@ function insertInitialNiches() {
         if (row.count === 0) {
             console.log('Inserting initial niches...');
             const initialNiches = [
+                // Main Categories
                 {
                     name: "Technology & Innovation",
                     description: "Latest tech trends, gadgets, AI, and digital innovation",
@@ -206,10 +207,135 @@ function insertInitialNiches() {
                     description: "Recipes, cooking techniques, food culture, and culinary experiences",
                     persona: "Passionate chef who loves experimenting with flavors and sharing delicious recipes with food lovers",
                     keywords: "food, cooking, recipes, culinary, chef, cuisine, flavors, delicious, kitchen"
+                },
+                {
+                    name: "Personal Development",
+                    description: "Self-improvement, productivity, mindset, and personal growth strategies",
+                    persona: "Life coach dedicated to helping people unlock their potential and achieve personal transformation",
+                    keywords: "personal development, self improvement, productivity, mindset, growth, motivation, success habits"
+                },
+                {
+                    name: "Finance & Investing",
+                    description: "Financial literacy, investment strategies, wealth building, and money management",
+                    persona: "Financial advisor passionate about helping people achieve financial freedom through smart money decisions",
+                    keywords: "finance, investing, money, wealth, financial freedom, budgeting, stocks, crypto"
+                },
+                {
+                    name: "Fashion & Style",
+                    description: "Fashion trends, style tips, outfit inspiration, and personal styling advice",
+                    persona: "Fashion stylist who helps people express their personality through clothing and develop confidence in their style",
+                    keywords: "fashion, style, outfit, trends, clothing, accessories, beauty, personal style"
+                },
+                {
+                    name: "Home & Lifestyle",
+                    description: "Home decor, organization, DIY projects, and lifestyle inspiration",
+                    persona: "Interior design enthusiast who creates beautiful, functional spaces and shares practical home improvement tips",
+                    keywords: "home decor, interior design, DIY, organization, lifestyle, home improvement, decorating"
+                },
+                {
+                    name: "Parenting & Family",
+                    description: "Parenting tips, family activities, child development, and family lifestyle content",
+                    persona: "Experienced parent who shares practical parenting advice and creates meaningful family experiences",
+                    keywords: "parenting, family, kids, children, motherhood, fatherhood, family life, child development"
+                },
+                // Entertainment & Media
+                {
+                    name: "Gaming & Esports",
+                    description: "Video games, gaming culture, esports, game reviews, and gaming lifestyle",
+                    persona: "Gaming enthusiast who shares game insights, reviews, and connects with the gaming community",
+                    keywords: "gaming, esports, video games, streaming, game reviews, gaming culture, PC gaming, console"
+                },
+                {
+                    name: "Movies & Entertainment",
+                    description: "Movie reviews, entertainment news, celebrity content, and pop culture discussions",
+                    persona: "Entertainment critic who provides insightful reviews and commentary on movies, shows, and pop culture",
+                    keywords: "movies, entertainment, film, TV shows, celebrities, pop culture, reviews, cinema"
+                },
+                {
+                    name: "Music & Audio",
+                    description: "Music discovery, artist spotlights, music production, and audio content",
+                    persona: "Music lover who discovers and shares amazing artists while exploring all genres and music culture",
+                    keywords: "music, artists, songs, albums, music production, audio, concerts, music discovery"
+                },
+                {
+                    name: "Books & Literature",
+                    description: "Book reviews, reading recommendations, author interviews, and literary discussions",
+                    persona: "Avid reader who shares book recommendations and creates a community of literature enthusiasts",
+                    keywords: "books, reading, literature, authors, book reviews, writing, novels, book recommendations"
+                },
+                // Creative & Artistic
+                {
+                    name: "Art & Design",
+                    description: "Visual arts, graphic design, creative inspiration, and artistic techniques",
+                    persona: "Creative artist who shares artistic inspiration, techniques, and celebrates visual creativity",
+                    keywords: "art, design, creativity, visual arts, graphic design, illustration, artistic inspiration"
+                },
+                {
+                    name: "Photography",
+                    description: "Photography tips, camera techniques, photo editing, and visual storytelling",
+                    persona: "Professional photographer who shares technical expertise and helps others capture beautiful moments",
+                    keywords: "photography, camera, photo editing, visual storytelling, portraits, landscape photography"
+                },
+                {
+                    name: "Writing & Content Creation",
+                    description: "Writing tips, content strategy, storytelling, and creative writing inspiration",
+                    persona: "Content creator and writer who helps others improve their writing and storytelling skills",
+                    keywords: "writing, content creation, storytelling, blogging, copywriting, creative writing"
+                },
+                // Lifestyle & Wellness
+                {
+                    name: "Mental Health & Wellness",
+                    description: "Mental health awareness, wellness practices, mindfulness, and emotional well-being",
+                    persona: "Mental health advocate who promotes wellness and helps reduce stigma around mental health topics",
+                    keywords: "mental health, wellness, mindfulness, self care, therapy, emotional health, stress management"
+                },
+                {
+                    name: "Spirituality & Mindfulness",
+                    description: "Spiritual growth, meditation, mindfulness practices, and inner peace content",
+                    persona: "Spiritual guide who helps others find inner peace and develop meaningful spiritual practices",
+                    keywords: "spirituality, meditation, mindfulness, inner peace, spiritual growth, consciousness"
+                },
+                {
+                    name: "Relationships & Dating",
+                    description: "Relationship advice, dating tips, love stories, and interpersonal communication",
+                    persona: "Relationship coach who helps people build healthy, meaningful connections and navigate dating",
+                    keywords: "relationships, dating, love, communication, relationship advice, romance, couples"
+                },
+                // Specialized Interests
+                {
+                    name: "Pets & Animals",
+                    description: "Pet care, animal welfare, cute pet content, and animal education",
+                    persona: "Animal lover who shares pet care tips and advocates for animal welfare while celebrating pet joy",
+                    keywords: "pets, animals, dogs, cats, pet care, animal welfare, cute animals, pet training"
+                },
+                {
+                    name: "Science & Education",
+                    description: "Scientific discoveries, educational content, research insights, and learning resources",
+                    persona: "Science educator who makes complex topics accessible and inspires curiosity about the natural world",
+                    keywords: "science, education, research, learning, discovery, STEM, knowledge, scientific facts"
+                },
+                {
+                    name: "Sports & Athletics",
+                    description: "Sports news, athletic performance, team updates, and sports culture content",
+                    persona: "Sports enthusiast who provides insights on games, athletes, and the culture surrounding sports",
+                    keywords: "sports, athletics, fitness, teams, games, athletes, sports news, competition"
+                },
+                {
+                    name: "Automotive & Transportation",
+                    description: "Car reviews, automotive news, vehicle maintenance, and transportation innovation",
+                    persona: "Automotive expert who shares car insights, reviews, and keeps up with transportation technology",
+                    keywords: "cars, automotive, vehicles, transportation, car reviews, auto news, driving"
+                },
+                // Niche Communities
+                {
+                    name: "Anime & Manga",
+                    description: "Anime reviews, manga recommendations, Japanese culture, and otaku community content",
+                    persona: "Anime enthusiast who shares reviews, recommendations, and celebrates Japanese pop culture",
+                    keywords: "anime, manga, Japanese culture, otaku, anime reviews, manga recommendations, cosplay"
                 }
             ];
 
-            const insertQuery = 'INSERT INTO niches (name, description, persona, keywords) VALUES (?, ?, ?, ?)';
+            const insertQuery = 'INSERT OR IGNORE INTO niches (name, description, persona, keywords) VALUES (?, ?, ?, ?)';
 
             initialNiches.forEach(niche => {
                 db.run(insertQuery, [niche.name, niche.description, niche.persona, niche.keywords], (err) => {
@@ -222,6 +348,19 @@ function insertInitialNiches() {
             });
         } else {
             console.log(`Database already has ${row.count} niches`);
+            // If we have fewer than 24 niches, add the missing ones
+            if (row.count < 24) {
+                console.log('Adding missing niches to existing database...');
+                const insertQuery = 'INSERT OR IGNORE INTO niches (name, description, persona, keywords) VALUES (?, ?, ?, ?)';
+
+                initialNiches.forEach(niche => {
+                    db.run(insertQuery, [niche.name, niche.description, niche.persona, niche.keywords], (err) => {
+                        if (err && !err.message.includes('UNIQUE constraint failed')) {
+                            console.error(`Error adding niche ${niche.name}:`, err);
+                        }
+                    });
+                });
+            }
         }
     });
 }

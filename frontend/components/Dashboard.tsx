@@ -7,6 +7,7 @@ import ContentHistory from './ContentHistory';
 import ContentVariations from './ContentVariations';
 import Analytics from './Analytics';
 import Settings from './Settings';
+import GrowthBot from './GrowthBot';
 import { ApiService } from '../services/api';
 
 interface DashboardStats {
@@ -41,7 +42,7 @@ const setupSSE = (onMessage: (data: any) => void) => {
 const Dashboard: React.FC = () => {
     const [serviceStatus, setServiceStatus] = useState<'running' | 'stopped'>('stopped');
     const [notifications, setNotifications] = useState<string[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'analytics' | 'niches' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'analytics' | 'niches' | 'growth-bot' | 'settings'>('overview');
     const [stats, setStats] = useState<DashboardStats>({
         totalContent: 0,
         pendingContent: 0,
@@ -145,6 +146,13 @@ const Dashboard: React.FC = () => {
                     Niche Management
                 </button>
                 <button
+                    className={`tab-btn ${activeTab === 'growth-bot' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('growth-bot')}
+                >
+                    <span className="tab-icon">🤖</span>
+                    Growth Bot
+                </button>
+                <button
                     className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
                     onClick={() => setActiveTab('settings')}
                 >
@@ -239,6 +247,10 @@ const Dashboard: React.FC = () => {
                         <NicheForm onNicheCreated={handleNicheCreated} />
                         <NicheList key={refreshKey} />
                     </div>
+                )}
+
+                {activeTab === 'growth-bot' && (
+                    <GrowthBot />
                 )}
 
                 {activeTab === 'settings' && (
