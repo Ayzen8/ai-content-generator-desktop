@@ -1,5 +1,7 @@
 export class ApiService {
-    private static baseUrl = "http://localhost:3000"; // adjust this port if needed
+    private static baseUrl = process.env.NODE_ENV === 'production'
+        ? window.location.origin
+        : "http://localhost:3000";
 
     static async get(endpoint: string) {
         const response = await fetch(`${this.baseUrl}${endpoint}`);
