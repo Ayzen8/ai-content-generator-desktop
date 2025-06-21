@@ -13,6 +13,7 @@ const growthBotService = require('./services/growth-bot-service');
 const credentialStorage = require('./services/credential-storage');
 const advancedAnalyticsService = require('./services/advanced-analytics-service');
 const contentTemplateService = require('./services/content-template-service');
+const hashtagResearchService = require('./services/hashtag-research-service');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -2571,6 +2572,76 @@ app.post('/api/content/generate-from-template', async (req, res) => {
     } catch (error) {
         console.error('Error generating content from template:', error);
         res.status(500).json({ error: 'Failed to generate content from template' });
+    }
+});
+
+// Hashtag Research API Endpoints
+app.get('/api/hashtag-research', async (req, res) => {
+    try {
+        const category = req.query.category;
+        const limit = parseInt(req.query.limit) || 50;
+        const hashtags = await hashtagResearchService.getHashtagsByCategory(category, limit);
+        res.json(hashtags);
+    } catch (error) {
+        console.error('Error getting hashtags:', error);
+        res.status(500).json({ error: 'Failed to get hashtags' });
+    }
+});
+
+app.post('/api/hashtag-research/optimize', async (req, res) => {
+    try {
+        const { nicheId, contentType, targetCount, keywords } = req.body;
+
+        const optimizedMix = await hashtagResearchService.getOptimizedHashtagMix(
+            nicheId,
+            contentType || 'general',
+            targetCount || 15
+        );
+
+        res.json(optimizedMix);
+    } catch (error) {
+        console.error('Error optimizing hashtags:', error);
+        res.status(500).json({ error: 'Failed to optimize hashtags' });
+    }
+});
+
+app.get('/api/hashtag-research/combinations', async (req, res) => {
+    try {
+        const nicheId = req.query.nicheId;
+        const combinations = await hashtagResearchService.getSavedCombinations(nicheId);
+        res.json(combinations);
+    } catch (error) {
+        console.error('Error getting hashtag combinations:', error);
+        res.status(500).json({ error: 'Failed to get hashtag combinations' });
+    }
+});
+
+app.post('/api/hashtag-research/combinations', async (req, res) => {
+    try {
+        const combination = req.body;
+
+        if (!combination.name || !combination.hashtags) {
+            return res.status(400).json({ error: 'Name and hashtags are required' });
+        }
+
+        const combinationId = await hashtagResearchService.saveHashtagCombination(combination);
+        res.json({ success: true, id: combinationId });
+    } catch (error) {
+        console.error('Error saving hashtag combination:', error);
+        res.status(500).json({ error: 'Failed to save hashtag combination' });
+    }
+});
+
+app.post('/api/hashtag-research/niche/:nicheId', async (req, res) => {
+    try {
+        const nicheId = req.params.nicheId;
+        const keywords = req.body.keywords || [];
+
+        const research = await hashtagResearchService.researchNicheHashtags(nicheId, keywords);
+        res.json(research);
+    } catch (error) {
+        console.error('Error researching niche hashtags:', error);
+        res.status(500).json({ error: 'Failed to research niche hashtags' });
     }
 });
 

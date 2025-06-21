@@ -8,6 +8,7 @@ import ContentVariations from './ContentVariations';
 import Analytics from './Analytics';
 import AdvancedAnalyticsDashboard from './AdvancedAnalyticsDashboard';
 import ContentTemplates from './ContentTemplates';
+import HashtagResearch from './HashtagResearch';
 import Settings from './Settings';
 import GrowthBot from './GrowthBot';
 import { ApiService } from '../services/api';
@@ -44,7 +45,7 @@ const setupSSE = (onMessage: (data: any) => void) => {
 const Dashboard: React.FC = () => {
     const [serviceStatus, setServiceStatus] = useState<'running' | 'stopped'>('stopped');
     const [notifications, setNotifications] = useState<string[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'templates' | 'analytics' | 'advanced-analytics' | 'niches' | 'growth-bot' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'variations' | 'history' | 'templates' | 'hashtags' | 'analytics' | 'advanced-analytics' | 'niches' | 'growth-bot' | 'settings'>('overview');
     const [stats, setStats] = useState<DashboardStats>({
         totalContent: 0,
         pendingContent: 0,
@@ -139,6 +140,13 @@ const Dashboard: React.FC = () => {
                 >
                     <span className="tab-icon">📝</span>
                     Templates
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'hashtags' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('hashtags')}
+                >
+                    <span className="tab-icon">🔍</span>
+                    Hashtags
                 </button>
                 <button
                     className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
@@ -256,6 +264,10 @@ const Dashboard: React.FC = () => {
 
                 {activeTab === 'templates' && (
                     <ContentTemplates />
+                )}
+
+                {activeTab === 'hashtags' && (
+                    <HashtagResearch />
                 )}
 
                 {activeTab === 'analytics' && (
