@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import ApiService from '../services/api';
 
 interface ContentAnalysis {
@@ -48,6 +49,7 @@ const ContentOptimizer: React.FC<ContentOptimizerProps> = ({
     const [loading, setLoading] = useState(false);
     const [optimizedContent, setOptimizedContent] = useState('');
     const [showOptimizer, setShowOptimizer] = useState(false);
+    const [showOptimizedPopup, setShowOptimizedPopup] = useState(false);
 
     useEffect(() => {
         if (content && content.length > 10) {
@@ -81,7 +83,7 @@ const ContentOptimizer: React.FC<ContentOptimizerProps> = ({
                 analysis
             });
             setOptimizedContent(response.optimized_content);
-            setShowOptimizer(true);
+            setShowOptimizedPopup(true);
         } catch (error) {
             console.error('Error optimizing content:', error);
         } finally {
@@ -258,55 +260,46 @@ const ContentOptimizer: React.FC<ContentOptimizerProps> = ({
                 </div>
             )}
 
-            {/* Optimized Content Modal */}
-            {showOptimizer && optimizedContent && (
-                <div className="optimizer-modal-overlay">
-                    <div className="optimizer-modal">
-                        <div className="modal-header">
-                            <h3>⚡ Optimized Content</h3>
-                            <button 
-                                className="close-modal-btn"
-                                onClick={() => setShowOptimizer(false)}
+            {/* Separate Optimized Content Popup */}
+            {showOptimizedPopup && optimizedContent && createPortal(
+                <div className="optimized-content-popup">
+                    <div className="popup-header">
+                        <h3>✨ Your Optimized Content</h3>
+                        <button
+                            className="popup-close-btn"
+                            onClick={() => setShowOptimizedPopup(false)}
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div className="popup-content">
+                        <div className="optimized-text-box">
+                            {optimizedContent}
+                        </div>
+
+                        <div className="popup-actions">
+                            <button
+                                className="use-btn"
+                                onClick={() => {
+                                    if (onOptimizedContent) {
+                                        onOptimizedContent(optimizedContent);
+                                    }
+                                    setShowOptimizedPopup(false);
+                                }}
                             >
-                                ✕
+                                ✅ Use This
+                            </button>
+                            <button
+                                className="close-btn"
+                                onClick={() => setShowOptimizedPopup(false)}
+                            >
+                                Close
                             </button>
                         </div>
-                        
-                        <div className="modal-content">
-                            <div className="content-comparison">
-                                <div className="original-content">
-                                    <h4>Original:</h4>
-                                    <div className="content-preview">{content}</div>
-                                </div>
-                                
-                                <div className="optimized-content">
-                                    <h4>Optimized:</h4>
-                                    <div className="content-preview optimized">{optimizedContent}</div>
-                                </div>
-                            </div>
-                            
-                            <div className="modal-actions">
-                                <button 
-                                    className="use-optimized-btn"
-                                    onClick={() => {
-                                        if (onOptimizedContent) {
-                                            onOptimizedContent(optimizedContent);
-                                        }
-                                        setShowOptimizer(false);
-                                    }}
-                                >
-                                    ✅ Use Optimized Version
-                                </button>
-                                <button 
-                                    className="keep-original-btn"
-                                    onClick={() => setShowOptimizer(false)}
-                                >
-                                    Keep Original
-                                </button>
-                            </div>
-                        </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

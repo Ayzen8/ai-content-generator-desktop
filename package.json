@@ -1,13 +1,13 @@
 {
   "name": "ai-content-generator-desktop",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Desktop application for AI Content Generator - Create engaging content for social media",
   "author": "AI Content Generator Team",
   "main": "main.js",
   "homepage": "./",
   "scripts": {
     "electron": "electron .",
-    "electron-dev": "concurrently \"npm run build:dev\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-dev": "concurrently \"npm run build:dev\" \"wait-on http://localhost:3001 && electron .\"",
     "build": "npx webpack --mode production",
     "build:dev": "npx webpack --mode development",
     "start": "npm run build && electron .",
@@ -57,6 +57,7 @@
     "compression-webpack-plugin": "^11.1.0",
     "electron": "^32.2.6",
     "electron-builder": "^25.1.8",
+    "html-webpack-plugin": "^5.6.3",
     "mocha": "^11.7.0",
     "rimraf": "^5.0.0",
     "sinon": "^21.0.0",

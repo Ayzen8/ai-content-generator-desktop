@@ -4,11 +4,20 @@ export class ApiService {
         : window.location.origin;
 
     static async get(endpoint: string) {
-        const response = await fetch(`${this.baseUrl}${endpoint}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        console.log(`Making GET request to: ${this.baseUrl}${endpoint}`);
+        try {
+            const response = await fetch(`${this.baseUrl}${endpoint}`);
+            console.log(`Response status: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log(`Response data:`, data);
+            return data;
+        } catch (error) {
+            console.error(`API GET error for ${endpoint}:`, error);
+            throw error;
         }
-        return await response.json();
     }
 
     static async post(endpoint: string, data: any) {

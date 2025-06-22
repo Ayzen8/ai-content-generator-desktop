@@ -3237,6 +3237,73 @@ app.get('/api/database/statistics', async (req, res) => {
     }
 });
 
+// Additional System API Endpoints for SystemDashboard
+app.get('/api/performance/dashboard', async (req, res) => {
+    try {
+        // Mock performance data for now
+        const performanceData = {
+            responseTime: Math.random() * 100 + 50,
+            throughput: Math.random() * 1000 + 500,
+            errorRate: Math.random() * 5,
+            uptime: 99.9,
+            activeConnections: Math.floor(Math.random() * 100) + 20
+        };
+        res.json(performanceData);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/performance/dashboard',
+            method: 'GET',
+            userAction: 'get_performance_dashboard'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/cache/stats', async (req, res) => {
+    try {
+        // Mock cache stats for now
+        const cacheStats = {
+            hitRate: Math.random() * 0.3 + 0.7, // 70-100%
+            memoryUsage: Math.random() * 30 + 40, // 40-70%
+            totalRequests: Math.floor(Math.random() * 10000) + 5000,
+            cacheHits: Math.floor(Math.random() * 8000) + 4000,
+            cacheMisses: Math.floor(Math.random() * 2000) + 1000
+        };
+        res.json(cacheStats);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/cache/stats',
+            method: 'GET',
+            userAction: 'get_cache_stats'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/cdn/optimization-report', async (req, res) => {
+    try {
+        // Mock CDN optimization report
+        const cdnReport = {
+            totalAssets: 150,
+            optimizedAssets: 145,
+            compressionSavings: {
+                gzip: { savingsPercent: "65.2", originalSize: "2.4MB", compressedSize: "836KB" },
+                brotli: { savingsPercent: "72.8", originalSize: "2.4MB", compressedSize: "653KB" }
+            },
+            cacheHitRate: 94.5,
+            bandwidthSaved: "1.2GB"
+        };
+        res.json(cdnReport);
+    } catch (error) {
+        await errorHandlingService.logError(error, {
+            endpoint: '/api/cdn/optimization-report',
+            method: 'GET',
+            userAction: 'get_cdn_optimization_report'
+        });
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/database/optimize', async (req, res) => {
     try {
         const { operation } = req.body;

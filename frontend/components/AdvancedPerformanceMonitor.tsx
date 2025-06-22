@@ -320,7 +320,7 @@ const AdvancedPerformanceMonitor: React.FC = () => {
                     </AnimatedButton>
                     <AnimatedButton 
                         onClick={() => clearCache(['content', 'analytics'])}
-                        variant="warning"
+                        variant="secondary"
                     >
                         🗑️ Clear Cache
                     </AnimatedButton>

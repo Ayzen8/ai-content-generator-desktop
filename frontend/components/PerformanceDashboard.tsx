@@ -266,19 +266,19 @@ const PerformanceDashboard: React.FC = () => {
                         <div className="cache-actions">
                             <AnimatedButton 
                                 onClick={() => invalidateCache(['content'])}
-                                variant="warning"
+                                variant="secondary"
                             >
                                 🗑️ Clear Content Cache
                             </AnimatedButton>
-                            <AnimatedButton 
+                            <AnimatedButton
                                 onClick={() => invalidateCache(['analytics'])}
-                                variant="warning"
+                                variant="secondary"
                             >
                                 📊 Clear Analytics Cache
                             </AnimatedButton>
-                            <AnimatedButton 
+                            <AnimatedButton
                                 onClick={() => invalidateCache(['niche'])}
-                                variant="warning"
+                                variant="secondary"
                             >
                                 🎯 Clear Niche Cache
                             </AnimatedButton>

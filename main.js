@@ -59,7 +59,8 @@ function startServer() {
     try {
         serverProcess = spawn('node', ['server.js'], {
             cwd: __dirname,
-            stdio: 'pipe'
+            stdio: 'pipe',
+            env: { ...process.env, PORT: '3000' }
         });
 
         serverProcess.stdout.on('data', (data) => {
@@ -143,7 +144,7 @@ function createMenu() {
                         dialog.showMessageBox(mainWindow, {
                             type: 'info',
                             title: 'About AI Content Generator',
-                            message: 'AI Content Generator v1.0.0',
+                            message: 'AI Content Generator v2.0.0 Enterprise',
                             detail: 'Create engaging content for social media with AI assistance.'
                         });
                     }

@@ -75,7 +75,7 @@
             }
         });
 
-        // Fallback if React doesn't load within 10 seconds
+        // Fallback if React doesn't load within 15 seconds
         setTimeout(() => {
             const root = document.getElementById('root');
             if (root.innerHTML.includes('Loading')) {
@@ -83,14 +83,71 @@
                     <div class="error">
                         <h2>Application Loading Timeout</h2>
                         <p>The React application is taking longer than expected to load.</p>
-                        <p>Please check that the development server is running and refresh the page.</p>
+                        <p>This might be because the server is still starting up or there's a connection issue.</p>
+                        <p><strong>Try:</strong> Wait a moment and refresh the page (Ctrl+R or F5)</p>
+                        <p><strong>Or:</strong> Close the app and restart it</p>
                     </div>
                 `;
             }
-        }, 10000);
+        }, 15000);
     </script>
 
     <!-- React Application Bundle -->
-    <script src="/dist/bundle.js"></script>
+    <script>
+        // Dynamically load the webpack bundles
+        const scripts = [
+            'dist/runtime.7ebf8c4c.js',
+            'dist/react.f482ae9d.js',
+            'dist/main.f1413960.js'
+        ];
+
+        let loadedScripts = 0;
+        const totalScripts = scripts.length;
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    loadedScripts++;
+                    console.log(`Loaded: ${src} (${loadedScripts}/${totalScripts})`);
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.error(`Failed to load: ${src}`);
+                    reject(new Error(`Failed to load ${src}`));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // Load scripts sequentially
+        async function loadAllScripts() {
+            try {
+                for (const script of scripts) {
+                    await loadScript(script);
+                }
+                console.log('All scripts loaded successfully');
+            } catch (error) {
+                console.error('Failed to load scripts:', error);
+                const root = document.getElementById('root');
+                root.innerHTML = `
+                    <div class="error">
+                        <h2>Failed to Load Application Scripts</h2>
+                        <p>Could not load the React application bundles.</p>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Please try refreshing the page or check the console for more details.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Start loading when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadAllScripts);
+        } else {
+            loadAllScripts();
+        }
+    </script>
 </body>
 </html>

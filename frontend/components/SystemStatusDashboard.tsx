@@ -356,7 +356,7 @@ const SystemStatusDashboard: React.FC = () => {
                     <AnimatedButton variant="primary">
                         🔧 Run Diagnostics
                     </AnimatedButton>
-                    <AnimatedButton variant="warning">
+                    <AnimatedButton variant="secondary">
                         🧹 Clear Cache
                     </AnimatedButton>
                     <AnimatedButton variant="secondary">

@@ -14,14 +14,14 @@ import {
     LazyCustomNicheCreatorWithFallback
 } from './LazyComponents';
 
-// Standard lazy loading for other components
-const LazyContentHistory = React.lazy(() => import('./ContentHistory'));
-const LazyContentVariations = React.lazy(() => import('./ContentVariations'));
-const LazyAnalytics = React.lazy(() => import('./Analytics'));
-const LazyContentTemplates = React.lazy(() => import('./ContentTemplates'));
-const LazyHashtagResearch = React.lazy(() => import('./HashtagResearch'));
-const LazySettings = React.lazy(() => import('./Settings'));
-const LazyGrowthBot = React.lazy(() => import('./GrowthBot'));
+// Import components directly to fix loading issues
+import ContentHistory from './ContentHistory';
+import ContentVariations from './ContentVariations';
+import Analytics from './Analytics';
+import ContentTemplates from './ContentTemplates';
+import HashtagResearch from './HashtagResearch';
+import Settings from './Settings';
+import GrowthBot from './GrowthBot';
 
 interface DashboardStats {
   totalContent: number;
@@ -282,45 +282,15 @@ const Dashboard: React.FC = () => {
                     <ContentGenerator />
                 )}
 
-                {activeTab === 'variations' && (
-                    <LazyLoadErrorBoundary>
-                        <React.Suspense fallback={<div className="loading-fallback">Loading Content Variations...</div>}>
-                            <LazyContentVariations />
-                        </React.Suspense>
-                    </LazyLoadErrorBoundary>
-                )}
+                {activeTab === 'variations' && <ContentVariations />}
 
-                {activeTab === 'history' && (
-                    <LazyLoadErrorBoundary>
-                        <React.Suspense fallback={<div className="loading-fallback">Loading Content History...</div>}>
-                            <LazyContentHistory />
-                        </React.Suspense>
-                    </LazyLoadErrorBoundary>
-                )}
+                {activeTab === 'history' && <ContentHistory />}
 
-                {activeTab === 'templates' && (
-                    <LazyLoadErrorBoundary>
-                        <React.Suspense fallback={<div className="loading-fallback">Loading Templates...</div>}>
-                            <LazyContentTemplates />
-                        </React.Suspense>
-                    </LazyLoadErrorBoundary>
-                )}
+                {activeTab === 'templates' && <ContentTemplates />}
 
-                {activeTab === 'hashtags' && (
-                    <LazyLoadErrorBoundary>
-                        <React.Suspense fallback={<div className="loading-fallback">Loading Hashtag Research...</div>}>
-                            <LazyHashtagResearch />
-                        </React.Suspense>
-                    </LazyLoadErrorBoundary>
-                )}
+                {activeTab === 'hashtags' && <HashtagResearch />}
 
-                {activeTab === 'analytics' && (
-                    <LazyLoadErrorBoundary>
-                        <React.Suspense fallback={<div className="loading-fallback">Loading Analytics...</div>}>
-                            <LazyAnalytics />
-                        </React.Suspense>
-                    </LazyLoadErrorBoundary>
-                )}
+                {activeTab === 'analytics' && <Analytics />}
 
                 {activeTab === 'advanced-analytics' && (
                     <LazyLoadErrorBoundary>
@@ -350,21 +320,9 @@ const Dashboard: React.FC = () => {
                     </LazyLoadErrorBoundary>
                 )}
 
-                {activeTab === 'growth-bot' && (
-                    <LazyLoadErrorBoundary>
-                        <React.Suspense fallback={<div className="loading-fallback">Loading Growth Bot...</div>}>
-                            <LazyGrowthBot />
-                        </React.Suspense>
-                    </LazyLoadErrorBoundary>
-                )}
+                {activeTab === 'growth-bot' && <GrowthBot />}
 
-                {activeTab === 'settings' && (
-                    <LazyLoadErrorBoundary>
-                        <React.Suspense fallback={<div className="loading-fallback">Loading Settings...</div>}>
-                            <LazySettings />
-                        </React.Suspense>
-                    </LazyLoadErrorBoundary>
-                )}
+                {activeTab === 'settings' && <Settings />}
             </div>
         </div>
     );

@@ -28,13 +28,13 @@ class PerformanceOptimizationService {
                 last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP
             );
 
-            CREATE TABLE IF NOT EXISTS performance_metrics (
+            CREATE TABLE IF NOT EXISTS performance_metrics_optimization (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 metric_type TEXT NOT NULL, -- 'api_response', 'db_query', 'cache_hit', 'memory_usage'
                 metric_name TEXT NOT NULL,
-                value REAL NOT NULL,
+                metric_value REAL NOT NULL,
                 unit TEXT, -- 'ms', 'mb', 'count', 'percentage'
-                context TEXT, -- JSON with additional context
+                tags TEXT, -- JSON with additional context (renamed from context)
                 recorded_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -112,7 +112,7 @@ class PerformanceOptimizationService {
     async recordMetric(type, name, value, unit = null, context = null) {
         return new Promise((resolve, reject) => {
             const query = `
-                INSERT INTO performance_metrics (metric_type, metric_name, value, unit, context)
+                INSERT INTO performance_metrics_optimization (metric_type, metric_name, metric_value, unit, tags)
                 VALUES (?, ?, ?, ?, ?)
             `;
 
@@ -425,7 +425,7 @@ class PerformanceOptimizationService {
     async getRecentMetrics() {
         return new Promise((resolve, reject) => {
             const query = `
-                SELECT * FROM performance_metrics 
+                SELECT * FROM performance_metrics_optimization
                 WHERE recorded_at >= datetime('now', '-1 hour')
                 ORDER BY recorded_at DESC
             `;
